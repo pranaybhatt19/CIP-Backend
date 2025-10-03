@@ -11,7 +11,7 @@ export class Communications extends BaseEntity {
     @Column({ type: "timestamp" })
     date!: Date;
 
-    @Column({ type: "varchar", length: 500, nullable: true, default: null })
+    @Column({ type: "varchar", length: 750, nullable: true, default: null })
     link!: string;
 
     @Column({ type: "varchar", length: 1000, nullable: true, default: null })

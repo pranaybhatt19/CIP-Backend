@@ -6,16 +6,22 @@ import cors from "cors";
 import helmet from "helmet";
 import entryRoutes from "./routes/entry.routes";
 import dotenv from "dotenv";
+import { authenticate } from "./middlewares/auth.middleware";
+import userRoutes from "./routes/user.routes";
 dotenv.config();
 
 const app = express();
 
+const allowedOrigins = [
+  `${process.env.FRONTEND_DEV_DOMAIN}`
+];
+
 app.use(helmet());
-app.use(cors());
+app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(express.json());
 
 app.use("/api", entryRoutes);
-
+app.use("/api/auth/users", authenticate, userRoutes);
 
 app.use(errors());
 

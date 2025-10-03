@@ -3,7 +3,7 @@ import app from "./app";
 import { AppDataSource } from "./database/config/data-source";
 dotenv.config();
 
-const port = process.env.PORT || 3008;
+const port = process.env.PORT || 3007;
 const serverIP = process.env.SERVER_IP || "localhost";
 
 AppDataSource.initialize()
