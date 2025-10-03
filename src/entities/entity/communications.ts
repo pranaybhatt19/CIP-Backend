@@ -16,4 +16,7 @@ export class Communications extends BaseEntity {
 
     @Column({ type: "varchar", length: 1000, nullable: true, default: null })
     feedback?: string;
+
+    @Column({ type: "boolean", default: false })
+    is_deleted!: boolean; 
 }

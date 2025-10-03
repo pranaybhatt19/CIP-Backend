@@ -1,3 +1,4 @@
+import { User } from "../entities";
 
 
 export interface ISavedResponse {
@@ -11,3 +12,9 @@ export interface IMailResponse {
   status: boolean;
 }
 
+export interface ISavePractice {
+  user: User,
+  date: Date;
+  link: string;
+  feedback?: any | null;
+}

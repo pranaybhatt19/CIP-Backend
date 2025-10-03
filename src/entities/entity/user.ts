@@ -5,7 +5,7 @@ import { Designation } from "./designation";
 @Entity({ name: "users", schema: "cip_schema" })
 export class User extends BaseEntity {
   @Column({ type: "varchar", length: 100 })
-  fullname!: string;
+  full_name!: string;
 
   @Column({ type: "varchar", length: 50 })
   first_name!: string;

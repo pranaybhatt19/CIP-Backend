@@ -4,7 +4,7 @@ import { AppDataSource } from "../database/config/data-source";
 import { User } from "../entities";
 
 export interface AuthRequest extends Request {
-  user?: { sub: string; email: string; };
+  user?: { sub: string; email: string; designation: string, reportingPerson: any | null, activeStatus: boolean };
 }
 
 export const authenticate = async (
@@ -24,19 +24,21 @@ export const authenticate = async (
 
   try {
     const decoded = verifyToken(token) as any;
-    req.user = {
-      sub: String(decoded.sub),
-      email: decoded.email,
-    };
 
-    const userId: number = parseInt(req.user.sub);
+    const userId: number = parseInt(decoded.sub);
 
     if (!AppDataSource.isInitialized) {
       await AppDataSource.initialize();
     }
     const userRepository = AppDataSource.getRepository(User);
 
-    const dbUser = await userRepository.findOne({ where: { id: userId } });
+    const dbUser = await userRepository.createQueryBuilder('user')
+    .leftJoinAndSelect("user.designation", "designations")
+    .leftJoinAndSelect('user.reporting_person', 'reportingPerson')
+    .leftJoinAndSelect('reportingPerson.designation', 'roDesignation')
+    .where("user.id = :id", { id: userId })
+    .getOne();
+
     if (!dbUser) {
       return res
         .status(401)
@@ -52,6 +54,16 @@ export const authenticate = async (
     req.user = {
       sub: dbUser.id as any,
       email: dbUser.email,
+      designation: dbUser.designation.name,
+      reportingPerson: dbUser?.reporting_person ? {
+        sub: dbUser?.reporting_person?.id,
+        name: dbUser?.reporting_person?.full_name,
+        designation: {
+          id: dbUser?.designation.id,
+          name: dbUser?.designation.name
+        }
+      } as any : null,
+      activeStatus: dbUser.is_active
     };
 
     next();
