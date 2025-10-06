@@ -77,13 +77,3 @@ export const searchUsersSchema = {
       }),
   }),
 };
-
-// Name - textbox
-// Designation - Multi Dropdown
-// Experience - same as Attempts (type, value)
-// Reporting Person - Multi Dropdown
-// Attempts - (type, value)
-
-// getDesignations - GET API
-// getReportingPersons - GET API (Based on User)
-// searchDashboard - POST
