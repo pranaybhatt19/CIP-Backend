@@ -1,4 +1,4 @@
-  DROP FUNCTION IF EXISTS cip_schema.get_user_hierarchy(
+DROP FUNCTION IF EXISTS cip_schema.get_user_hierarchy(
       integer, text, integer[], integer[], text, numeric, text, numeric, integer, integer, text, text
       );
 
@@ -32,7 +32,6 @@
       BEGIN
           RETURN QUERY
           WITH RECURSIVE user_hierarchy AS (
-              -- Root user
               SELECT 
                   u.id,
                   u.full_name::text,
@@ -42,7 +41,6 @@
                   rp.full_name::text AS reporting_person_name,
                   u.designation_id,
                   d.name::text AS designation_name,
-                  -- Format as yy.mm (years + months as decimal fraction)
                   (DATE_PART('year', AGE(NOW(), u.experience)) 
                       + DATE_PART('month', AGE(NOW(), u.experience)) / 100)::numeric AS experience_years,
                   (SELECT COUNT(*) FROM cip_schema.communications c WHERE c.user_id = u.id)::bigint AS attempts_count
@@ -53,7 +51,6 @@
 
               UNION ALL
 
-              -- Children in hierarchy
               SELECT
                   u.id,
                   concat(u.first_name, ' ', u.last_name)::text AS name,
@@ -63,7 +60,6 @@
                   rp.full_name::text AS reporting_person_name,
                   u.designation_id,
                   d.name::text AS designation_name,
-                  -- Format as yy.mm (years + months as decimal fraction)
                   (DATE_PART('year', AGE(NOW(), u.experience)) 
                       + DATE_PART('month', AGE(NOW(), u.experience)) / 100)::numeric AS experience_years,
                   (SELECT COUNT(*) FROM cip_schema.communications c WHERE c.user_id = u.id)::bigint AS attempts_count
@@ -76,14 +72,12 @@
               SELECT *
               FROM user_hierarchy uh
               WHERE
-                  -- 🚀 Exclude root user
                   uh.id <> root_user_id
                   AND (name_filter IS NULL OR uh.full_name ILIKE '%' || name_filter || '%')
                   AND (designation_ids IS NULL OR uh.designation_id = ANY(designation_ids))
                   AND (reporting_person_ids IS NULL OR uh.reporting_person_id = ANY(reporting_person_ids))
                   AND (
                       experience_type IS NULL OR experience_value IS NULL OR
-                      -- Direct comparison with yy.mm format (e.g., 5.07 means 5 years 7 months)
                       (experience_type = 'LESS_THAN' AND uh.experience_years < experience_value) OR
                       (experience_type = 'GREATER_THAN' AND uh.experience_years > experience_value) OR
                       (experience_type = 'EQUALS' AND uh.experience_years = experience_value)
