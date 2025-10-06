@@ -28,9 +28,9 @@ export class User extends BaseEntity {
   @Column({ type: "boolean", default: true })
   is_active!: boolean;
 
-  @ManyToOne(() => User)
+  @ManyToOne(() => User, { nullable: true })
   @JoinColumn({ name: "reporting_person_id" })
-  reporting_person!: User;
+  reporting_person?: User;
 
   @ManyToOne(() => Designation)
   @JoinColumn({ name: "designation_id" })
