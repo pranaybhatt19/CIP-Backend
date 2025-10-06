@@ -413,14 +413,15 @@ const getReportingPersonsList = async (
   res: Response
 ): Promise<any> => {
   try {
-    const reportingPersons = await userRepository
-      .createQueryBuilder("user")
-      .select(["user.id", "user.full_name"])
-      .where("user.reporting_person_id IS NOT NULL")
-      .distinct(true)
-      .getMany();
+    const userId = req.user?.sub;
+    const sql = `
+      SELECT * FROM cip_schema.get_reporting_persons_hierarchy(
+        $1
+      )
+    `;
+    const reportingPersons = await AppDataSource.manager.query(sql, [userId]);
     return res.status(200).json({
-      reportingPersons,
+      data: reportingPersons,
       message: "Reporting Persons list fetched successfully",
     });
   } catch (e: any) {
