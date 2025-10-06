@@ -28,6 +28,7 @@ userRouter.post("/user-practices", getUsersPracticeDetails);
 userRouter.get("/get-designations", getDesignations);
 userRouter.get("/get-reporting-persons", getReportingPersons);
 
+
 // PATCH Requests
 userRouter.patch("/delete-practice/:id", deletePractice);
 
