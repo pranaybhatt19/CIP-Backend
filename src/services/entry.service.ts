@@ -1,15 +1,17 @@
 import { Request, Response } from "express";
-import bcrypt from "bcryptjs";
-import dotenv from "dotenv";
 import { AppDataSource } from "../database/config/data-source";
 import { createToken, verifyToken } from "../utils/jwt-manager";
 import { LoginDto } from "../dto/entry/login.dto";
 import { User } from "../entities";
 import { generateOtpPlain, hashValue } from "../utils/validators";
 import { ForgotPasswordEmailDto, VerifyOtpDto } from "../dto";
-import { otpEmailTemplate, sendEmail } from "../utils/email-manager";
+import { otpEmailTemplate, registeredEmailTemplate, sendEmail } from "../utils/email-manager";
 import { OtpTokenDto } from "../dto/entry/otp-token.dto";
 import { ResetPasswordDto } from "../dto/entry/reset-password.dto";
+import nodemailer from "nodemailer";
+import bcrypt from "bcryptjs";
+import crypto from 'crypto';
+import dotenv from "dotenv";
 dotenv.config();
 
 const userRepository = AppDataSource.getRepository(User);
@@ -265,10 +267,120 @@ const addMinutes = (date: Date, minutes: number): Date => {
   return new Date(date.getTime() + minutes * 60 * 1000);
 };
 
+const refactorUserData = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const users: User[] = await userRepository
+      .createQueryBuilder('u')
+      .where('u.id = :id', { id: 1})
+      .getMany();
+
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST || "smtp.gmail.com",
+      port: Number(process.env.EMAIL_PORT),
+      secure: false, 
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+      pool: true,
+      maxConnections: 5,
+      maxMessages: Infinity,
+      tls: {
+        rejectUnauthorized: false,
+      },
+    });
+
+    await transporter.verify();
+
+    const processingPromises = users.map(async (user) => {
+      try {
+        
+        const newPass = generatePassword(8)
+        const hashedPassword: string = await bcrypt.hash(newPass, 10);
+        const updatedUser = await userRepository.update(user.id, { password: hashedPassword });
+        
+        const htmlTemplate = registeredEmailTemplate(
+          user.full_name,
+          user.email,
+          newPass
+        );
+
+        const mailOptions = {
+          from: process.env.FROM_EMAIL, 
+          to: user.email,
+          subject: "Get started with CIP", 
+          html: htmlTemplate, 
+          text: undefined, 
+        };
+
+        await transporter.sendMail(mailOptions);
+        
+        return updatedUser;
+      } catch (error) {
+        console.error(`Failed to process user ${user.email}:`, error);
+        return null;
+      }
+    });
+    
+    const processedUsers = await Promise.all(processingPromises);
+    return res.status(200).json({ data: processedUsers });
+  } catch(err: any){
+    const message = err.message || "Error fetching user details";
+    return res.status(500).json({ message: message });
+  }
+};
+
+
+const randIndex = (max: any) => crypto.randomInt(0, max);
+
+function shuffle(arr: any) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = randIndex(i + 1);
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function generatePassword(length = 8) {
+  if (length < 3) {
+    throw new Error('length must be at least 3 to include letter, digit and special char');
+  }
+
+  const alpha = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  const integers = "0123456789";
+  const exCharacters = "!@#$%^&*_-=+";
+
+  const all = alpha + integers + exCharacters;
+  const pwdChars = [];
+
+  pwdChars.push(alpha[randIndex(alpha.length)]);
+  pwdChars.push(integers[randIndex(integers.length)]);
+  pwdChars.push(exCharacters[randIndex(exCharacters.length)]);
+
+  for (let i = pwdChars.length; i < length; i++) {
+    pwdChars.push(all[randIndex(all.length)]);
+  }
+
+  return shuffle(pwdChars).join('');
+}
+
+// const updateUserInDb = async(user: User) => {
+//   try{
+//     const newPass = generatePassword(8)
+//     const hashedPassword: string = await bcrypt.hash(newPass, 10);
+//     const updatedUser = await userRepository.update(user.id, { password: hashedPassword });
+    
+//     return { updatedData: {...updatedUser}, password: newPass };
+//   } catch(err: any){
+//     console.log('err');
+//   }
+// }
+
 export {
   loginUser,
   resetPasswordProcess,
   verifyEmailAndGenerateOtpProcess,
   verifyOtpAndGenerateResetTokenProcess,
   verifyOtpTokenProcess,
+  refactorUserData
 };

@@ -63,7 +63,7 @@ export function otpEmailTemplate(otp: any, otp_expiry_minutes: any) {
     <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width">
-    <title>IPP — OTP</title>
+    <title>CIP — OTP</title>
     <style>
       /* Basic resets for email clients */
       body { margin:0; padding:0; -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; }
@@ -86,7 +86,7 @@ export function otpEmailTemplate(otp: any, otp_expiry_minutes: any) {
               <!-- Hero / OTP -->
               <tr>
                 <td style="padding:28px 24px; text-align:center;">
-                  <h1 class="hero-title" style="margin:0 0 12px 0; font-size:24px; line-height:1.2; color:#1976d2;">Your OTP Code</h1>
+                  <h1 class="hero-title" style="margin:0 0 12px 0; font-size:24px; line-height:1.2; color:#2a9d8f;">Your OTP Code</h1>
 
                   <p style="margin:0 0 18px 0; color:#334155;">Great to see you aboard! Use the following One-Time Password (OTP) to complete your action. Do not share this code with anyone.</p>
 
@@ -96,7 +96,7 @@ export function otpEmailTemplate(otp: any, otp_expiry_minutes: any) {
                         <div style="font-size:13px; color:#6b7280; margin-bottom:10px;">OTP is valid for <strong style="color:#111827;">${otp_expiry_minutes} minutes</strong> only</div>
 
                         <div style="display:inline-block; padding:18px 26px; background:#ffffff; border-radius:8px; border:1px solid #e6eef9;">
-                          <div class="otp-code" style="font-size:35px; font-weight:700; letter-spacing:10px; color:#1976d2; margin-right: -10px;">${otp}</div>
+                          <div class="otp-code" style="font-size:35px; font-weight:700; letter-spacing:10px; color:#2a9d8f; margin-right: -10px;">${otp}</div>
                         </div>
                       </td>
                     </tr>
@@ -120,7 +120,7 @@ export function registeredEmailTemplate(userName: string, email: string, passwor
     <head>
       <meta charset="utf-8" />
       <meta name="viewport" content="width=device-width" />
-      <title>Welcome to IPP</title>
+      <title>Welcome to CIP</title>
       <style>
         body { margin:0; padding:0; -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; }
         table { border-spacing:0; }
@@ -140,13 +140,13 @@ export function registeredEmailTemplate(userName: string, email: string, passwor
           <table class="container" width="600" cellpadding="0" cellspacing="0" role="presentation" style="background:#ffffff; border-radius:10px; overflow:hidden; box-shadow:0 6px 18px rgba(15,23,42,0.08);">
             <tr>
               <td style="padding:28px 24px;">
-                <h1 class="hero-title" style="margin:0 0 12px 0; font-size:24px; line-height:1.2; color:#1976d2;">Welcome aboard, ${userName}!</h1>
-                <p style="margin:0 0 18px 0; color:#334155;">We're delighted to have you on IPP. Below are your initial login credentials — please update your password and sign in.</p>
+                <h1 class="hero-title" style="margin:0 0 12px 0; font-size:24px; line-height:1.2; color:#2a9d8f;">Welcome aboard, ${userName}!</h1>
+                <p style="margin:0 0 18px 0; color:#334155;">We're delighted to have you on CIP. Below are your initial login credentials — please update your password and sign in.</p>
 
                 <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin:18px 0; background:#f8fafc; border-radius:8px; padding:14px;">
                   <tr>
                     <td style="font-size:14px; color:#111827;">
-                      <strong>Your IPP email:</strong><br>
+                      <strong>Your CIP email:</strong><br>
                       <span style="display:inline-block; margin-top:6px; padding:8px 10px; background:#ffffff; border-radius:6px; border:1px solid #e6eef9;">${email}</span>
                     </td>
                   </tr>
@@ -162,12 +162,12 @@ export function registeredEmailTemplate(userName: string, email: string, passwor
                 </table>
 
                 <p style="margin:18px 0 6px 0;">
-                  <a href="http://ipp.anasource.com/" class="button" style="background:#1976d2; color:#ffffff; border-radius:8px;" aria-label="Sign in to IPP">Sign in to IPP</a>
+                  <a href="http://cip.web4.anasource.com/" class="button" style="background:#2a9d8f; color:#ffffff; border-radius:8px;" aria-label="Sign in to CIP">Sign in to CIP</a>
                 </p>
 
                 <p style="margin:12px 0 6px 0; font-size:14px; color:#334155;">
                   Change your password here:
-                  <a href="http://ipp.anasource.com/forgot-password" style="color:#1976d2; font-weight:600;">Reset password</a>
+                  <a href="http://cip.web4.anasource.com/forgot-password" style="color:#2a9d8f; font-weight:600;">Reset password</a>
                 </p>
 
                 <hr style="border:none; border-top:1px solid #eef2f7; margin:18px 0;">

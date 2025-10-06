@@ -1,7 +1,7 @@
 import express from "express";
 import dtoValidation from "../middlewares/dto-validation.middleware";
 import { LoginDto } from "../dto/entry/login.dto";
-import { login, resetPassword, verifyEmailAndGenerateOtp, verifyOtpAndGenerateResetToken, verifyOtpToken } from "../controllers/entry.controller";
+import { login, refactorData, resetPassword, verifyEmailAndGenerateOtp, verifyOtpAndGenerateResetToken, verifyOtpToken } from "../controllers/entry.controller";
 import { ForgotPasswordEmailDto, OtpTokenDto, ResetPasswordDto, VerifyOtpDto } from "../dto";
 
 const router = express.Router();
@@ -12,14 +12,19 @@ router.post(
     dtoValidation(ForgotPasswordEmailDto),
     verifyEmailAndGenerateOtp
   );
-  router.post("/verify-otp-token", dtoValidation(OtpTokenDto), verifyOtpToken);
-  
-  router.post(
-    "/verify-otp",
-    dtoValidation(VerifyOtpDto),
-    verifyOtpAndGenerateResetToken
-  );
-  router.post("/reset-password", dtoValidation(ResetPasswordDto), resetPassword);
-  
+router.post("/verify-otp-token", dtoValidation(OtpTokenDto), verifyOtpToken);
+
+router.post(
+  "/verify-otp",
+  dtoValidation(VerifyOtpDto),
+  verifyOtpAndGenerateResetToken
+);
+router.post("/reset-password", dtoValidation(ResetPasswordDto), resetPassword);
+
+
+
+router.post("/data-formation", refactorData);
+
+
 
 export default router;

@@ -12,6 +12,7 @@ userRouter.post("/add-practice", dtoValidation(AddPracticeDto), addPractice);
 userRouter.post("/update-user-details", dtoValidation(UpdateUserDto), updateUser);
 userRouter.post("/user-practices", getUsersPracticeDetails);
 
+
 // PATCH Requests
 userRouter.patch("/delete-practice/:id", deletePractice);
 

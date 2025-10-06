@@ -8,9 +8,9 @@ import { AddPracticeDto } from "../dto";
 import { ISavePractice } from "../interfaces";
 import { AuthRequest } from "../middlewares/auth.middleware";
 
+
 const userRepository = AppDataSource.getRepository(User);
 const communicationRepository = AppDataSource.getRepository(Communications);
-
 
 // const registerUser = async (req: Request, res: Response): Promise<any> => {
 //   const { fName, email, password, role, designation, experience } = req.body;
@@ -49,7 +49,7 @@ const communicationRepository = AppDataSource.getRepository(Communications);
 
 //     const subject = "Get started with CIP";
 //   //   const htmlTemplate = registeredEmailTemplate(
-//   //     newUserPayload.fullname,
+//   //     newUserPayload.full_name,
 //   //     newUserPayload.email,
 //   //     password
 //   //   );
@@ -101,7 +101,10 @@ const updateUserDetails = async (req: Request, res: Response): Promise<any> => {
       user.password = await bcrypt.hash(password, 10);
     }
 
-    return res.status(200).json({ message: "User updated successfully" });
+    user.updated_at = new Date();
+    const savedUser = await userRepository.save(user);
+
+    return res.status(200).json({ message: "User updated successfully", payload: savedUser });
   } catch(err: any){
     console.error("Error updating user:", err);
     const message = err.message || "Error updating user";
