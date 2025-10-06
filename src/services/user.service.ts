@@ -425,7 +425,7 @@ const getReportingPersonsList = async (
       message: "Reporting Persons list fetched successfully",
     });
   } catch (e: any) {
-    console.error("Error while user reporting Persons fetching:", e);
+    console.error("Error while reporting persons fetching:", e);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
