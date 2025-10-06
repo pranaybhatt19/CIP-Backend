@@ -25,6 +25,7 @@ export class GetUserHierarchy1759489277748 implements MigrationInterface {
       )
       RETURNS TABLE(
           total_count bigint,
+          name text,
           user_id integer,
           full_name text,
           email text,
@@ -42,6 +43,7 @@ export class GetUserHierarchy1759489277748 implements MigrationInterface {
               SELECT 
                   u.id,
                   u.full_name::text,
+                  concat(u.first_name, ' ', u.last_name)::text AS name,
                   u.email::text,
                   u.reporting_person_id,
                   rp.full_name::text AS reporting_person_name,
@@ -60,6 +62,7 @@ export class GetUserHierarchy1759489277748 implements MigrationInterface {
               -- Children in hierarchy
               SELECT
                   u.id,
+                  concat(u.first_name, ' ', u.last_name)::text AS name,
                   u.full_name::text,
                   u.email::text,
                   u.reporting_person_id,
@@ -98,6 +101,7 @@ export class GetUserHierarchy1759489277748 implements MigrationInterface {
           )
           SELECT
               (SELECT COUNT(*) FROM filtered_hierarchy) AS total_count,
+              fh.name AS name,
               fh.id AS user_id,
               fh.full_name,
               fh.email,
