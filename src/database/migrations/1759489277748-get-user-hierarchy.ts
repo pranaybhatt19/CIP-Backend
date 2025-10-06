@@ -79,8 +79,7 @@ export class GetUserHierarchy1759489277748 implements MigrationInterface {
               SELECT *
               FROM user_hierarchy uh
               WHERE
-                  uh.id <> root_user_id
-                  AND (name_filter IS NULL OR uh.full_name ILIKE '%' || name_filter || '%')
+                 (name_filter IS NULL OR uh.full_name ILIKE '%' || name_filter || '%')
                   AND (designation_ids IS NULL OR uh.designation_id = ANY(designation_ids))
                   AND (reporting_person_ids IS NULL OR uh.reporting_person_id = ANY(reporting_person_ids))
                   AND (
