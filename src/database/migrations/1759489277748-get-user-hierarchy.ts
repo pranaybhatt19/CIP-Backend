@@ -5,7 +5,7 @@ export class GetUserHierarchy1759489277748 implements MigrationInterface {
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
-      DROP FUNCTION IF EXISTS cip_schema.get_user_hierarchy(
+       DROP FUNCTION IF EXISTS cip_schema.get_user_hierarchy(
       integer, text, integer[], integer[], text, numeric, text, numeric, integer, integer, text, text
       );
 
@@ -49,8 +49,9 @@ export class GetUserHierarchy1759489277748 implements MigrationInterface {
                   rp.full_name::text AS reporting_person_name,
                   u.designation_id,
                   d.name::text AS designation_name,
+                  -- Format as yy.mm (years + months as decimal fraction)
                   (DATE_PART('year', AGE(NOW(), u.experience)) 
-                      + DATE_PART('month', AGE(NOW(), u.experience)) / 12)::numeric AS experience_years,
+                      + DATE_PART('month', AGE(NOW(), u.experience)) / 100)::numeric AS experience_years,
                   (SELECT COUNT(*) FROM cip_schema.communications c WHERE c.user_id = u.id)::bigint AS attempts_count
               FROM cip_schema.users u
               LEFT JOIN cip_schema.users rp ON rp.id = u.reporting_person_id
@@ -69,8 +70,9 @@ export class GetUserHierarchy1759489277748 implements MigrationInterface {
                   rp.full_name::text AS reporting_person_name,
                   u.designation_id,
                   d.name::text AS designation_name,
+                  -- Format as yy.mm (years + months as decimal fraction)
                   (DATE_PART('year', AGE(NOW(), u.experience)) 
-                      + DATE_PART('month', AGE(NOW(), u.experience)) / 12)::numeric AS experience_years,
+                      + DATE_PART('month', AGE(NOW(), u.experience)) / 100)::numeric AS experience_years,
                   (SELECT COUNT(*) FROM cip_schema.communications c WHERE c.user_id = u.id)::bigint AS attempts_count
               FROM cip_schema.users u
               INNER JOIN user_hierarchy h ON u.reporting_person_id = h.id
@@ -88,9 +90,10 @@ export class GetUserHierarchy1759489277748 implements MigrationInterface {
                   AND (reporting_person_ids IS NULL OR uh.reporting_person_id = ANY(reporting_person_ids))
                   AND (
                       experience_type IS NULL OR experience_value IS NULL OR
-                      (experience_type = 'LESS_THAN' AND uh.experience_years < (FLOOR(experience_value) + ((experience_value - FLOOR(experience_value)) * 100 / 12))) OR
-                      (experience_type = 'GREATER_THAN' AND uh.experience_years > (FLOOR(experience_value) + ((experience_value - FLOOR(experience_value)) * 100 / 12))) OR
-                      (experience_type = 'EQUALS' AND uh.experience_years = (FLOOR(experience_value) + ((experience_value - FLOOR(experience_value)) * 100 / 12)))
+                      -- Direct comparison with yy.mm format (e.g., 5.07 means 5 years 7 months)
+                      (experience_type = 'LESS_THAN' AND uh.experience_years < experience_value) OR
+                      (experience_type = 'GREATER_THAN' AND uh.experience_years > experience_value) OR
+                      (experience_type = 'EQUALS' AND uh.experience_years = experience_value)
                   )
                   AND (
                       attempts_type IS NULL OR attempts_value IS NULL OR
@@ -125,7 +128,6 @@ export class GetUserHierarchy1759489277748 implements MigrationInterface {
           OFFSET offset_val;
       END;
       $$;
-
     `);
   }
 
