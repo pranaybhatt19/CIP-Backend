@@ -3,7 +3,7 @@ import { AppDataSource } from "../database/config/data-source";
 import { createToken, verifyToken } from "../utils/jwt-manager";
 import { LoginDto } from "../dto/entry/login.dto";
 import { User } from "../entities";
-import { generateOtpPlain, hashValue } from "../utils/validators";
+import { generateOtpPlain, generatePassword, hashValue } from "../utils/validators";
 import { ForgotPasswordEmailDto, VerifyOtpDto } from "../dto";
 import { otpEmailTemplate, registeredEmailTemplate, sendEmail } from "../utils/email-manager";
 import { OtpTokenDto } from "../dto/entry/otp-token.dto";
@@ -307,7 +307,7 @@ const refactorUserData = async (req: Request, res: Response): Promise<any> => {
         const updatedUser = await userRepository.update(user.id, { password: hashedPassword });
         
         const htmlTemplate = registeredEmailTemplate(
-          user.full_name,
+          `${user.first_name} ${user.last_name}`,
           user.email,
           newPass
         );
@@ -332,56 +332,11 @@ const refactorUserData = async (req: Request, res: Response): Promise<any> => {
     const processedUsers = await Promise.all(processingPromises);
     return res.status(200).json({ data: processedUsers });
   } catch(err: any){
-    const message = err.message || "Error fetching user details";
+    const message = err.message || "Error while processing user details";
     return res.status(500).json({ message: message });
   }
 };
 
-
-const randIndex = (max: any) => crypto.randomInt(0, max);
-
-function shuffle(arr: any) {
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = randIndex(i + 1);
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr;
-}
-
-function generatePassword(length = 8) {
-  if (length < 3) {
-    throw new Error('length must be at least 3 to include letter, digit and special char');
-  }
-
-  const alpha = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  const integers = "0123456789";
-  const exCharacters = "!@#$%^&*_-=+";
-
-  const all = alpha + integers + exCharacters;
-  const pwdChars = [];
-
-  pwdChars.push(alpha[randIndex(alpha.length)]);
-  pwdChars.push(integers[randIndex(integers.length)]);
-  pwdChars.push(exCharacters[randIndex(exCharacters.length)]);
-
-  for (let i = pwdChars.length; i < length; i++) {
-    pwdChars.push(all[randIndex(all.length)]);
-  }
-
-  return shuffle(pwdChars).join('');
-}
-
-// const updateUserInDb = async(user: User) => {
-//   try{
-//     const newPass = generatePassword(8)
-//     const hashedPassword: string = await bcrypt.hash(newPass, 10);
-//     const updatedUser = await userRepository.update(user.id, { password: hashedPassword });
-    
-//     return { updatedData: {...updatedUser}, password: newPass };
-//   } catch(err: any){
-//     console.log('err');
-//   }
-// }
 
 export {
   loginUser,

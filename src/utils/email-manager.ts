@@ -16,8 +16,6 @@ export async function sendEmail(
   };
 
   try {
-    const rejectUnauthorized = process.env.SMTP_TLS_REJECT_UNAUTHORIZED === "false";
-
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST || "smtp.gmail.com",
       port: Number(process.env.EMAIL_PORT),
@@ -30,7 +28,7 @@ export async function sendEmail(
       maxConnections: 5,
       maxMessages: 100,
       tls: {
-        rejectUnauthorized,
+        rejectUnauthorized: false,
       },
     });
 
@@ -55,7 +53,6 @@ export async function sendEmail(
     return response;
   }
 }
-
 
 export function otpEmailTemplate(otp: any, otp_expiry_minutes: any) {
   return `<!doctype html>

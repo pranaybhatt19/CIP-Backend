@@ -1,25 +1,26 @@
-import { IsString, MinLength, IsEmail, IsOptional, IsIn, IsNumber, IsDate } from "class-validator";
-
-
-
+import { IsString, MinLength, IsEmail, IsNumber, IsDate } from "class-validator";
 
 export class AddNewUserDto {
     @IsString()
     @MinLength(2)
-    fullName!: string;
+    firstName!: string;
+
+    @IsString()
+    @MinLength(2)
+    middleName!: string;
+
+    @IsString()
+    @MinLength(2)
+    lastName!: string;
 
     @IsEmail()
     email!: string;
 
-    @IsString()
-    @MinLength(8)
-    password!: string;
+    @IsDate()
+    experience!: Date;
 
     @IsNumber()
     designation!: number;
-
-    @IsDate()
-    experience!: Date;
 
     @IsNumber()
     reportingPerson!: number;

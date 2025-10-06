@@ -2,9 +2,9 @@ import { Request, Response } from "express";
 import { AppDataSource } from "../database/config/data-source";
 import bcrypt from "bcryptjs";
 import { Communications, Designation, User } from "../entities";
-import { passwordValidation } from "../utils/validators";
+import { generatePassword, passwordValidation } from "../utils/validators";
 import { registeredEmailTemplate, sendEmail } from "../utils/email-manager";
-import { AddPracticeDto } from "../dto";
+import { AddNewUserDto, AddPracticeDto } from "../dto";
 import { ISavePractice } from "../interfaces";
 import { AuthRequest } from "../middlewares/auth.middleware";
 
@@ -14,14 +14,7 @@ const designationsRepository = AppDataSource.getRepository(Designation);
 const communicationRepository = AppDataSource.getRepository(Communications);
 
 const registerUser = async (req: Request, res: Response): Promise<any> => {
-  const { fullName, email, password, designation, experience, reportingPerson } = req.body;
-
-  if (!passwordValidation(password)) {
-    return res.status(400).json({
-      message:
-        "Password does not meet complexity requirements, Please create a strong password",
-    });
-  }
+  const { firstName, middleName, lastName, email, designation, experience, reportingPerson }: AddNewUserDto = req.body;
 
   try {
     const existingUser: User | null = await userRepository.findOne({
@@ -44,16 +37,15 @@ const registerUser = async (req: Request, res: Response): Promise<any> => {
       .where('urp.id = :urpId', { urpId: reportingPerson })
       .getOne();
 
+    const password = generatePassword();
     const hashedPassword: string = await bcrypt.hash(password, 10);
-    const name: string[] = String(fullName).split(" ");
-    const first_name: string = name[0] || '';
-    const middle_name: string = name[1] || '';
-    const last_name: string = name[2] || '';
+    const fullName: string = `${firstName} ${middleName} ${lastName}`; 
 
     const newUser: User = userRepository.create({
-      first_name: first_name,
-      middle_name: middle_name,
-      last_name: last_name,
+      full_name: fullName,
+      first_name: firstName,
+      middle_name: middleName,
+      last_name: lastName,
       email: email,
       password: hashedPassword,
       experience: experience,
@@ -66,7 +58,7 @@ const registerUser = async (req: Request, res: Response): Promise<any> => {
 
     const subject = "Get started with CIP";
     const htmlTemplate = registeredEmailTemplate(
-      newUserPayload.full_name,
+      `${firstName} ${lastName}`,
       newUserPayload.email,
       password
     );
@@ -183,7 +175,7 @@ const getPracticeDetailsByUserId = async (
   res: Response
 ): Promise<any> => {
   try {
-    const { id, offset, limit, dateExact, dateFrom, dateTo } = req.body;
+    const { id, offset, limit, dateExact, dateFrom, dateTo, order } = req.body;
 
     const numericId = Number(id);
 
@@ -276,6 +268,26 @@ const getPracticeDetailsByUserId = async (
         queryBuilder.andWhere("t.date < :toNextDay", {
           toNextDay: next.toISOString(),
         });
+      }
+    }
+
+    if(order && order.length > 0){
+      const validColumns = [
+        "date",
+      ];
+
+      const [column, order_by] = order[0];
+
+      if (validColumns.includes(column)) {
+        let orderColumn;
+
+        orderColumn = `practice.${column}`;
+
+        queryBuilder.orderBy(
+          orderColumn,
+          order_by.toUpperCase() as "ASC" | "DESC",
+          "NULLS LAST"
+        );
       }
     }
 

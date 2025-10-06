@@ -13,7 +13,11 @@ dotenv.config();
 const app = express();
 
 const allowedOrigins = [
-  `${process.env.FRONTEND_DEV_DOMAIN}`
+  `${process.env.FRONTEND_PROD_DOMAIN}`,
+  `${process.env.FRONTEND_PROD_TEST_DOMAIN}`,
+  `${process.env.FRONTEND_DEV_DOMAIN}`,
+  `${process.env.FRONTEND_ANASOURCE_URL}`,
+  `${process.env.FRONTEND_WEB_ANASOURCE_URL}`,
 ];
 
 app.use(helmet());
