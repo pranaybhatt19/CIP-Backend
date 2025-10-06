@@ -1,27 +1,27 @@
+import { Request, Response, NextFunction } from "express";
+import { isCelebrateError, CelebrateError, errors } from "celebrate";
+import errorMiddleware from "./middlewares/error.middleware";
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import entryRoutes from "./routes/entry.routes";
 import dotenv from "dotenv";
+import { authenticate } from "./middlewares/auth.middleware";
+import userRoutes from "./routes/user.routes";
 dotenv.config();
 
 const app = express();
 
 const allowedOrigins = [
-  `${process.env.FRONTEND_PROD_DOMAIN}`,
-  `${process.env.FRONTEND_PROD_TEST_DOMAIN}`,
-  `${process.env.FRONTEND_DEV_DOMAIN}`,
-  `${process.env.FRONTEND_ANASOURCE_URL}`,
+  `${process.env.FRONTEND_DEV_DOMAIN}`
 ];
 
 app.use(helmet());
 app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(express.json());
-import { Request, Response, NextFunction } from "express";
-import { isCelebrateError, CelebrateError, errors } from "celebrate";
-import errorMiddleware from "./middlewares/error.middleware";
 
 app.use("/api", entryRoutes);
+app.use("/api/auth/users", authenticate, userRoutes);
 
 app.use(errors());
 
