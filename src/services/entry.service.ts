@@ -180,7 +180,7 @@ const verifyEmailAndGenerateOtpProcess = async (
     userDetails.otp_expiration_time = otpExpiry;
     await userRepository.save(userDetails);
 
-    const subject = "IPP: OTP for Password Reset";
+    const subject = "CIP: OTP for Password Reset";
     const htmlTemplate = otpEmailTemplate(+otpPlain, otp_expiry_minutes);
 
     const emailResponse = await sendEmail(
@@ -277,10 +277,10 @@ const addMinutes = (date: Date, minutes: number): Date => {
 const refactorUserData = async (req: Request, res: Response): Promise<any> => {
   try {
     const users: User[] = await userRepository
-      .createQueryBuilder('u')
-      .where('u.id = :id', { id: 1})
+      .createQueryBuilder()
       .getMany();
-
+      
+      // .where('id = :id', { id: 1})
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST || "smtp.gmail.com",
       port: Number(process.env.EMAIL_PORT),

@@ -13,59 +13,75 @@ const userRepository = AppDataSource.getRepository(User);
 const designationsRepository = AppDataSource.getRepository(Designation);
 const communicationRepository = AppDataSource.getRepository(Communications);
 
-// const registerUser = async (req: Request, res: Response): Promise<any> => {
-//   const { fName, email, password, role, designation, experience } = req.body;
+const registerUser = async (req: Request, res: Response): Promise<any> => {
+  const { fullName, email, password, designation, experience, reportingPerson } = req.body;
 
-//   if (!passwordValidation(password)) {
-//     return res.status(400).json({
-//       message:
-//         "Password does not meet complexity requirements, Please create a strong password",
-//     });
-//   }
+  if (!passwordValidation(password)) {
+    return res.status(400).json({
+      message:
+        "Password does not meet complexity requirements, Please create a strong password",
+    });
+  }
 
-//   try {
-//     const existingUser: User | null = await userRepository.findOne({
-//       where: [{ email }],
-//     });
-//     if (existingUser) {
-//       return res
-//         .status(409)
-//         .json({ message: "User with this email already exists" });
-//     }
+  try {
+    const existingUser: User | null = await userRepository.findOne({
+      where: [{ email }],
+    });
+    if (existingUser) {
+      return res
+        .status(409)
+        .json({ message: "User with this email already exists" });
+    }
 
-//     const hashedPassword: string = await bcrypt.hash(password, 10);
-//     const username = String(email).split("@")[0];
-//   //   const newUser: User = userRepository.create({
-//   //     first_name: fName,
-//   //     user_name: username,
-//   //     email,
-//   //     password: hashedPassword,
-//   //     role,
-//   //     is_active: true,
-//   //     designation: designation || null,
-//   //     experience: experience || null,
-//   //   });
+    if(!designation) return res.status(400).json({ message: "Designation must be provided" });
+    if(!reportingPerson) return res.status(400).json({ message: "Reporting Person must be provided" });
 
-//   //   const newUserPayload: User = await userRepository.save(newUser);
+    const usersDesignation: any = await designationsRepository.createQueryBuilder('d')
+      .where('d.id = :dId', { dId: designation })
+      .getOne();
 
-//     const subject = "Get started with CIP";
-//   //   const htmlTemplate = registeredEmailTemplate(
-//   //     newUserPayload.full_name,
-//   //     newUserPayload.email,
-//   //     password
-//   //   );
+    const usersReportingPerson: any = await userRepository.createQueryBuilder('urp')
+      .where('urp.id = :urpId', { urpId: reportingPerson })
+      .getOne();
 
-//   //   const emailResponse = await sendEmail(newUser.email, subject, htmlTemplate);
-//   //   if (!emailResponse.status) {
-//   //     return res.status(401).json({ message: emailResponse.message });
-//   //   }
+    const hashedPassword: string = await bcrypt.hash(password, 10);
+    const name: string[] = String(fullName).split(" ");
+    const first_name: string = name[0] || '';
+    const middle_name: string = name[1] || '';
+    const last_name: string = name[2] || '';
 
-//     return res.status(201).json({ message: "User created successfully" });
-//   } catch (error) {
-//     console.error("Error creating user:", error);
-//     return res.status(500).json({ message: "Internal server error" });
-//   }
-// };
+    const newUser: User = userRepository.create({
+      first_name: first_name,
+      middle_name: middle_name,
+      last_name: last_name,
+      email: email,
+      password: hashedPassword,
+      experience: experience,
+      designation: (usersDesignation) as Designation,
+      reporting_person: (usersReportingPerson) as User,
+      is_active: true,
+    });
+
+    const newUserPayload: User = await userRepository.save(newUser);
+
+    const subject = "Get started with CIP";
+    const htmlTemplate = registeredEmailTemplate(
+      newUserPayload.full_name,
+      newUserPayload.email,
+      password
+    );
+
+    const emailResponse = await sendEmail(newUser.email, subject, htmlTemplate);
+    if (!emailResponse.status) {
+      return res.status(401).json({ message: emailResponse.message });
+    }
+
+    return res.status(201).json({ message: "User created successfully" });
+  } catch (error) {
+    console.error("Error creating user:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
 
 const updateUserDetails = async (req: Request, res: Response): Promise<any> => {
   try {
@@ -201,7 +217,7 @@ const getPracticeDetailsByUserId = async (
 
     const queryBuilder = await communicationRepository
       .createQueryBuilder("practice")
-      .where("practice.id = :userId", { userId: numericId })
+      .where("practice.user_id = :userId", { userId: numericId })
       .andWhere("practice.is_deleted = :status", { status: false })
       .orderBy("practice.id", "DESC");
 
@@ -451,8 +467,9 @@ const getDesignationsList = async (
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
 export {
-  // registerUser,
+  registerUser,
   searchUsersFilter,
   getReportingPersonsList,
   getDesignationsList,
