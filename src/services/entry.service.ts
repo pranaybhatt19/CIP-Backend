@@ -27,10 +27,11 @@ const loginUser = async (req: Request, res: Response): Promise<any> => {
         .status(400)
         .json({ message: "Email is required, Please try again." });
 
-    const userDetails = await userRepository.createQueryBuilder('user')
+    const userDetails = await userRepository
+      .createQueryBuilder("user")
       .leftJoinAndSelect("user.designation", "designation")
-      .leftJoinAndSelect('user.reporting_person', 'reportingPerson')
-      .leftJoinAndSelect('reportingPerson.designation', 'roDesignation')
+      .leftJoinAndSelect("user.reporting_person", "reportingPerson")
+      .leftJoinAndSelect("reportingPerson.designation", "roDesignation")
       .where("user.email = :email", { email: identity })
       .getOne();
 
@@ -54,17 +55,19 @@ const loginUser = async (req: Request, res: Response): Promise<any> => {
       name: userDetails.full_name,
       designation: {
         id: userDetails.designation.id,
-        name: userDetails.designation.name
+        name: userDetails.designation.name,
       },
-      reportingPerson: userDetails?.reporting_person ? {
-        sub: userDetails?.reporting_person?.id,
-        name: userDetails?.reporting_person?.full_name,
-        designation: {
-          id: userDetails?.designation.id,
-          name: userDetails?.designation.name
-        }
-      } : null,
-      activeStatus: userDetails.is_active
+      reportingPerson: userDetails?.reporting_person
+        ? {
+            sub: userDetails?.reporting_person?.id,
+            name: userDetails?.reporting_person?.full_name,
+            designation: {
+              id: userDetails?.designation.id,
+              name: userDetails?.designation.name,
+            },
+          }
+        : null,
+      activeStatus: userDetails.is_active,
     };
     const token: string = createToken(tokenPayload);
 
@@ -178,7 +181,11 @@ const verifyEmailAndGenerateOtpProcess = async (
     const subject = "IPP: OTP for Password Reset";
     const htmlTemplate = otpEmailTemplate(+otpPlain, otp_expiry_minutes);
 
-    const emailResponse = await sendEmail(userDetails.email, subject, htmlTemplate);
+    const emailResponse = await sendEmail(
+      userDetails.email,
+      subject,
+      htmlTemplate
+    );
     if (!emailResponse.status) {
       return res.status(401).json({ message: emailResponse.message });
     }
