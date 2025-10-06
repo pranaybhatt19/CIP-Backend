@@ -39,11 +39,11 @@ const loginUser = async (req: Request, res: Response): Promise<any> => {
       return res.status(401).json({ message: "user not found" });
     }
 
-    // const verify = await bcrypt.compare(password, userDetails.password);
+    const verify = await bcrypt.compare(password, userDetails.password);
 
-    // if (!verify) {
-    //   return res.status(401).json({ message: "Invalid credentials" });
-    // }
+    if (!verify) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
 
     if (!userDetails.is_active) {
       return res.status(403).json({ message: "User account is inactive" });
