@@ -34,6 +34,7 @@ BEGIN
         -- Root user
         SELECT 
             u.id,
+            concat(u.first_name, ' ', u.last_name)::text AS name,
             u.full_name::text,
             u.email::text,
             u.reporting_person_id,
@@ -53,6 +54,7 @@ BEGIN
         -- Children in hierarchy
         SELECT
             u.id,
+            concat(u.first_name, ' ', u.last_name)::text AS name,
             u.full_name::text,
             u.email::text,
             u.reporting_person_id,
@@ -92,6 +94,7 @@ BEGIN
     SELECT
         (SELECT COUNT(*) FROM filtered_hierarchy) AS total_count,
         fh.id AS user_id,
+        concat(u.first_name, ' ', u.last_name)::text AS name,
         fh.full_name,
         fh.email,
         json_build_object('id', fh.reporting_person_id, 'name', fh.reporting_person_name) AS reporting_person,

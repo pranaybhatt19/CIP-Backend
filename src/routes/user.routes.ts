@@ -5,6 +5,8 @@ import {
   getUsersPracticeDetails,
   updateUser,
   searchUsers,
+  getDesignations,
+  getReportingPersons,
 } from "../controllers/user.controller";
 import dtoValidation from "../middlewares/dto-validation.middleware";
 import { AddPracticeDto, UpdateUserDto } from "../dto";
@@ -23,6 +25,8 @@ userRouter.post(
   updateUser
 );
 userRouter.post("/user-practices", getUsersPracticeDetails);
+userRouter.get("/get-designations", getDesignations);
+userRouter.get("/get-reporting-persons", getReportingPersons);
 
 // PATCH Requests
 userRouter.patch("/delete-practice/:id", deletePractice);

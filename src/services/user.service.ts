@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { AppDataSource } from "../database/config/data-source";
 import bcrypt from "bcryptjs";
-import { Communications, User } from "../entities";
+import { Communications, Designation, User } from "../entities";
 import { passwordValidation } from "../utils/validators";
 import { registeredEmailTemplate, sendEmail } from "../utils/email-manager";
 import { AddPracticeDto } from "../dto";
@@ -9,6 +9,7 @@ import { ISavePractice } from "../interfaces";
 import { AuthRequest } from "../middlewares/auth.middleware";
 
 const userRepository = AppDataSource.getRepository(User);
+const designationsRepository = AppDataSource.getRepository(Designation);
 const communicationRepository = AppDataSource.getRepository(Communications);
 
 // const registerUser = async (req: Request, res: Response): Promise<any> => {
@@ -386,9 +387,6 @@ const searchUsersFilter = async (
   `;
 
     const rows = await AppDataSource.manager.query(sql, values);
-    // data: {
-    //   total, data;
-    // }
     const totalCount = rows.length > 0 ? parseInt(rows[0].total_count, 0) : 0;
     const data = rows.map((r: any) => ({
       user_id: r.user_id,
@@ -408,9 +406,50 @@ const searchUsersFilter = async (
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
+const getReportingPersonsList = async (
+  req: AuthRequest,
+  res: Response
+): Promise<any> => {
+  try {
+    const reportingPersons = await userRepository
+      .createQueryBuilder("user")
+      .select(["user.id", "user.full_name"])
+      .where("user.reporting_person_id IS NOT NULL")
+      .distinct(true)
+      .getMany();
+    return res.status(200).json({
+      reportingPersons,
+      message: "Reporting Persons list fetched successfully",
+    });
+  } catch (e: any) {
+    console.error("Error while user reporting Persons fetching:", e);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+const getDesignationsList = async (
+  req: AuthRequest,
+  res: Response
+): Promise<any> => {
+  try {
+    const designations = await designationsRepository.find({
+      select: ["id", "name"],
+    });
+    return res.status(200).json({
+      data: designations,
+      message: "Designation list fetched successfully",
+    });
+  } catch (e: any) {
+    console.error("Error while designations fetching:", e);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
 export {
-  searchUsersFilter,
   // registerUser,
+  searchUsersFilter,
+  getReportingPersonsList,
+  getDesignationsList,
   addNewPractice,
   updateUserDetails,
   deletePracticeResult,

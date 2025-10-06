@@ -5,6 +5,8 @@ import {
   getPracticeDetailsByUserId,
   updateUserDetails,
   searchUsersFilter,
+  getDesignationsList,
+  getReportingPersonsList,
 } from "../services/user.service";
 
 // const registerNewUser = async(req: Request, res: Response) => {
@@ -22,6 +24,14 @@ const addPractice = async (req: Request, res: Response) => {
   return await addNewPractice(req, res);
 };
 
+const getDesignations = async (req: Request, res: Response) => {
+  return await getDesignationsList(req, res);
+};
+
+const getReportingPersons = async (req: Request, res: Response) => {
+  return await getReportingPersonsList(req, res);
+};
+
 const getUsersPracticeDetails = async (req: Request, res: Response) => {
   return await getPracticeDetailsByUserId(req, res);
 };
@@ -32,6 +42,8 @@ const deletePractice = async (req: Request, res: Response) => {
 
 export {
   // registerNewUser,
+  getReportingPersons,
+  getDesignations,
   searchUsers,
   addPractice,
   updateUser,
