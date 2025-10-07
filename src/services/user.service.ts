@@ -8,13 +8,20 @@ import { AddNewUserDto, AddPracticeDto } from "../dto";
 import { ISavePractice } from "../interfaces";
 import { AuthRequest } from "../middlewares/auth.middleware";
 
-
 const userRepository = AppDataSource.getRepository(User);
 const designationsRepository = AppDataSource.getRepository(Designation);
 const communicationRepository = AppDataSource.getRepository(Communications);
 
 const registerUser = async (req: Request, res: Response): Promise<any> => {
-  const { firstName, middleName, lastName, email, designation, experience, reportingPerson }: AddNewUserDto = req.body;
+  const {
+    firstName,
+    middleName,
+    lastName,
+    email,
+    designation,
+    experience,
+    reportingPerson,
+  }: AddNewUserDto = req.body;
 
   try {
     const existingUser: User | null = await userRepository.findOne({
@@ -26,20 +33,26 @@ const registerUser = async (req: Request, res: Response): Promise<any> => {
         .json({ message: "User with this email already exists" });
     }
 
-    if(!designation) return res.status(400).json({ message: "Designation must be provided" });
-    if(!reportingPerson) return res.status(400).json({ message: "Reporting Person must be provided" });
+    if (!designation)
+      return res.status(400).json({ message: "Designation must be provided" });
+    if (!reportingPerson)
+      return res
+        .status(400)
+        .json({ message: "Reporting Person must be provided" });
 
-    const usersDesignation: any = await designationsRepository.createQueryBuilder('d')
-      .where('d.id = :dId', { dId: designation })
+    const usersDesignation: any = await designationsRepository
+      .createQueryBuilder("d")
+      .where("d.id = :dId", { dId: designation })
       .getOne();
 
-    const usersReportingPerson: any = await userRepository.createQueryBuilder('urp')
-      .where('urp.id = :urpId', { urpId: reportingPerson })
+    const usersReportingPerson: any = await userRepository
+      .createQueryBuilder("urp")
+      .where("urp.id = :urpId", { urpId: reportingPerson })
       .getOne();
 
     const password = generatePassword();
     const hashedPassword: string = await bcrypt.hash(password, 10);
-    const fullName: string = `${firstName} ${middleName} ${lastName}`; 
+    const fullName: string = `${firstName} ${middleName} ${lastName}`;
 
     const newUser: User = userRepository.create({
       full_name: fullName,
@@ -49,8 +62,8 @@ const registerUser = async (req: Request, res: Response): Promise<any> => {
       email: email,
       password: hashedPassword,
       experience: experience,
-      designation: (usersDesignation) as Designation,
-      reporting_person: (usersReportingPerson) as User,
+      designation: usersDesignation as Designation,
+      reporting_person: usersReportingPerson as User,
       is_active: true,
     });
 
@@ -113,8 +126,10 @@ const updateUserDetails = async (req: Request, res: Response): Promise<any> => {
     user.updated_at = new Date();
     const savedUser = await userRepository.save(user);
 
-    return res.status(200).json({ message: "User updated successfully", payload: savedUser });
-  }catch (err: any) {
+    return res
+      .status(200)
+      .json({ message: "User updated successfully", payload: savedUser });
+  } catch (err: any) {
     console.error("Error updating user:", err);
     const message = err.message || "Error updating user";
     return res.status(500).json({ message: message });
@@ -271,10 +286,8 @@ const getPracticeDetailsByUserId = async (
       }
     }
 
-    if(order && order.length > 0){
-      const validColumns = [
-        "date",
-      ];
+    if (order && order.length > 0) {
+      const validColumns = ["date"];
 
       const [column, order_by] = order[0];
 
@@ -374,6 +387,33 @@ const parseToDate = (val?: string | number) => {
   return date;
 };
 
+const buildUserHierarchy = (users: User[], currentUserId: number) => {
+  const userMap: Record<number, any> = {};
+  const roots: any[] = [];
+
+  users.forEach((user: any) => {
+    const { total_count, ...rest } = user;
+
+    userMap[user.user_id] = {
+      ...rest,
+      experience: parseInt(user.experience_years, 0),
+      attempts: parseInt(user.attempts_count, 0),
+      childrens: [],
+    };
+  });
+  users.forEach((user: any) => {
+    if (user.reporting_person?.id) {
+      const parent = userMap[user.reporting_person.id];
+      if (parent) {
+        parent.childrens.push(userMap[user.user_id]);
+      }
+    } else {
+      roots.push(userMap[user.user_id]);
+    }
+  });
+  return userMap[currentUserId];
+};
+
 const searchUsersFilter = async (
   req: AuthRequest,
   res: Response
@@ -390,6 +430,7 @@ const searchUsersFilter = async (
       limit,
       offset,
       order,
+      isTreeView,
     } = req.body;
 
     const designationIds = rawDesignationIds?.length ? rawDesignationIds : null;
@@ -412,28 +453,32 @@ const searchUsersFilter = async (
       order?.[0]?.[1] ?? "ASC",
     ];
 
-    const sql = `
-    SELECT * FROM cip_schema.get_user_hierarchy(
-      $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
-    )
-  `;
+    const sql = `SELECT * FROM cip_schema.get_user_hierarchy($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11,$12)`;
 
     const rows = await AppDataSource.manager.query(sql, values);
-    const totalCount = rows.length > 0 ? parseInt(rows[0].total_count, 0) : 0;
-    const data = rows.map((r: any) => ({
-      user_id: r.user_id,
-      name: r.name,
-      full_name: r.full_name,
-      email: r.email,
-      reporting_person: r.reporting_person,
-      designation: r.designation,
-      experience: r.experience_years,
-      attempts: parseInt(r.attempts_count, 0),
-    }));
-    return res.status(200).json({
-      data: { totalCount, data },
-      message: "Users fetched successfully",
-    });
+    if (!isTreeView) {
+      const totalCount = rows.length > 0 ? parseInt(rows[0].total_count, 0) : 0;
+      const data = rows.map((r: any) => ({
+        user_id: r.user_id,
+        name: r.name,
+        full_name: r.full_name,
+        email: r.email,
+        reporting_person: r.reporting_person,
+        designation: r.designation,
+        experience: parseInt(r.experience_years, 0),
+        attempts: parseInt(r.attempts_count, 0),
+      }));
+      return res.status(200).json({
+        data: { totalCount, data },
+        message: "Users fetched successfully",
+      });
+    } else {
+      const hierarchy = buildUserHierarchy(rows, Number(user?.sub));
+      return res.status(200).json({
+        data: hierarchy,
+        message: "Users fetched successfully",
+      });
+    }
   } catch (error) {
     console.error("Error while user list fetching:", error);
     return res.status(500).json({ message: "Internal server error" });

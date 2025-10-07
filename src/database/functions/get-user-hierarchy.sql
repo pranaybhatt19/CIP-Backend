@@ -41,6 +41,7 @@ DROP FUNCTION IF EXISTS cip_schema.get_user_hierarchy(
                   rp.full_name::text AS reporting_person_name,
                   u.designation_id,
                   d.name::text AS designation_name,
+                  u.is_active,
                   (DATE_PART('year', AGE(NOW(), u.experience)) 
                       + DATE_PART('month', AGE(NOW(), u.experience)) / 100)::numeric AS experience_years,
                   (SELECT COUNT(*) FROM cip_schema.communications c WHERE c.user_id = u.id)::bigint AS attempts_count
@@ -60,6 +61,7 @@ DROP FUNCTION IF EXISTS cip_schema.get_user_hierarchy(
                   rp.full_name::text AS reporting_person_name,
                   u.designation_id,
                   d.name::text AS designation_name,
+                  u.is_active,
                   (DATE_PART('year', AGE(NOW(), u.experience)) 
                       + DATE_PART('month', AGE(NOW(), u.experience)) / 100)::numeric AS experience_years,
                   (SELECT COUNT(*) FROM cip_schema.communications c WHERE c.user_id = u.id)::bigint AS attempts_count
@@ -87,6 +89,8 @@ DROP FUNCTION IF EXISTS cip_schema.get_user_hierarchy(
                       (attempts_type = 'GREATER_THAN' AND uh.attempts_count > attempts_value) OR
                       (attempts_type = 'EQUALS' AND uh.attempts_count = attempts_value)
                   )
+                  AND uh.is_active = true 
+                  AND (uh.id != root_user_id OR uh.attempts_count > 0)
           )
           SELECT
               (SELECT COUNT(*) FROM filtered_hierarchy) AS total_count,

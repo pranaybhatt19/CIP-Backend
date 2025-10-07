@@ -24,14 +24,12 @@ userRouter.post(
   dtoValidation(UpdateUserDto),
   updateUser
 );
+userRouter.post("/searchUsers", celebrate(searchUsersSchema), searchUsers);
 userRouter.post("/user-practices", getUsersPracticeDetails);
 userRouter.get("/get-designations", getDesignations);
 userRouter.get("/get-reporting-persons", getReportingPersons);
 
-
 // PATCH Requests
 userRouter.patch("/delete-practice/:id", deletePractice);
-
-userRouter.post("/searchUsers", celebrate(searchUsersSchema), searchUsers);
 
 export default userRouter;
