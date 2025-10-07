@@ -49,7 +49,6 @@ const loginUser = async (req: Request, res: Response): Promise<any> => {
       return res.status(401).json({ message: "user not found" });
     }
 
-    console.log("user:::", userDetails);
     const verify = await bcrypt.compare(password, userDetails.password);
 
     if (!verify) {
