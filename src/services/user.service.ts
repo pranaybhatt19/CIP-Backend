@@ -229,24 +229,7 @@ const getPracticeDetailsByUserId = async (
       .orderBy("practice.id", "DESC");
 
     if (dateExact || dateFrom || dateTo) {
-      if (dateExact) {
-        const date = parseToDate(dateExact);
-        if (!date) {
-          return res.status(400).json({
-            message:
-              "Invalid dateExact format. Use YYYY-MM-DD or a valid date.",
-          });
-        }
-        const start = new Date(date);
-        start.setHours(0, 0, 0, 0);
-        const next = new Date(start);
-        next.setDate(next.getDate() + 1);
-
-        queryBuilder.andWhere("t.date >= :startOfDay AND t.date < :nextDay", {
-          startOfDay: start.toISOString(),
-          nextDay: next.toISOString(),
-        });
-      } else if (dateFrom && dateTo) {
+      if (dateFrom && dateTo) {
         const from = parseToDate(dateFrom);
         const to = parseToDate(dateTo);
         if (!from || !to) {
@@ -264,26 +247,25 @@ const getPracticeDetailsByUserId = async (
           fromDay: start.toISOString(),
           toNextDay: next.toISOString(),
         });
-      } else if (dateFrom) {
-        const from = parseToDate(dateFrom);
-        if (!from)
-          return res.status(400).json({ message: "Invalid dateFrom format." });
-        const start = new Date(from);
-        start.setHours(0, 0, 0, 0);
-        queryBuilder.andWhere("t.date >= :startOfDay", {
-          startOfDay: start.toISOString(),
-        });
-      } else if (dateTo) {
-        const to = parseToDate(dateTo);
-        if (!to)
-          return res.status(400).json({ message: "Invalid dateTo format." });
-        const next = new Date(to);
-        next.setDate(next.getDate() + 1);
-        next.setHours(0, 0, 0, 0);
-        queryBuilder.andWhere("t.date < :toNextDay", {
-          toNextDay: next.toISOString(),
-        });
       }
+      if (dateExact) {
+        const date = parseToDate(dateExact);
+        if (!date) {
+          return res.status(400).json({
+            message:
+              "Invalid dateExact format. Use YYYY-MM-DD or a valid date.",
+          });
+        }
+        const start = new Date(date);
+        start.setHours(0, 0, 0, 0);
+        const next = new Date(start);
+        next.setDate(next.getDate() + 1);
+
+        queryBuilder.andWhere("t.date >= :startOfDay AND t.date < :nextDay", {
+          startOfDay: start.toISOString(),
+          nextDay: next.toISOString(),
+        });
+      } 
     }
 
     if (order && order.length > 0) {
