@@ -91,7 +91,7 @@ DROP FUNCTION IF EXISTS cip_schema.get_user_hierarchy(
                   )
                   AND uh.is_active = true 
                   AND uh.reporting_person_id IS NOT NULL
-                  OR uh.id = root_user_id
+                  OR (uh.id = root_user_id AND uh.reporting_person_id IS NOT NULL)
           )
           SELECT
               (SELECT COUNT(*) FROM filtered_hierarchy) AS total_count,
