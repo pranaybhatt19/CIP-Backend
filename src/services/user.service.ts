@@ -475,7 +475,7 @@ const searchUsersFilter = async (
     } else {
       const hierarchy = buildUserHierarchy(rows, Number(user?.sub));
       return res.status(200).json({
-        data: hierarchy,
+        data: { data: hierarchy },
         message: "Users fetched successfully",
       });
     }
