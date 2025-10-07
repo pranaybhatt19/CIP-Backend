@@ -392,11 +392,11 @@ const buildUserHierarchy = (users: User[], currentUserId: number) => {
   const roots: any[] = [];
 
   users.forEach((user: any) => {
-    const { total_count, ...rest } = user;
+    const { total_count, experience_years, attempts_count, ...rest } = user;
 
     userMap[user.user_id] = {
       ...rest,
-      experience: parseInt(user.experience_years, 0),
+      experience: user.experience_years,
       attempts: parseInt(user.attempts_count, 0),
       childrens: [],
     };
@@ -465,7 +465,7 @@ const searchUsersFilter = async (
         email: r.email,
         reporting_person: r.reporting_person,
         designation: r.designation,
-        experience: parseInt(r.experience_years, 0),
+        experience: r.experience_years,
         attempts: parseInt(r.attempts_count, 0),
       }));
       return res.status(200).json({

@@ -3,14 +3,22 @@ import { AppDataSource } from "../database/config/data-source";
 import { createToken, verifyToken } from "../utils/jwt-manager";
 import { LoginDto } from "../dto/entry/login.dto";
 import { User } from "../entities";
-import { generateOtpPlain, generatePassword, hashValue } from "../utils/validators";
+import {
+  generateOtpPlain,
+  generatePassword,
+  hashValue,
+} from "../utils/validators";
 import { ForgotPasswordEmailDto, VerifyOtpDto } from "../dto";
-import { otpEmailTemplate, registeredEmailTemplate, sendEmail } from "../utils/email-manager";
+import {
+  otpEmailTemplate,
+  registeredEmailTemplate,
+  sendEmail,
+} from "../utils/email-manager";
 import { OtpTokenDto } from "../dto/entry/otp-token.dto";
 import { ResetPasswordDto } from "../dto/entry/reset-password.dto";
 import nodemailer from "nodemailer";
 import bcrypt from "bcryptjs";
-import crypto from 'crypto';
+import crypto from "crypto";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -196,7 +204,8 @@ const verifyEmailAndGenerateOtpProcess = async (
     userDetails.otp_expiration_time = otpExpiry;
     await userRepository.save(userDetails);
 
-    const subject = "Communication Improvement Program (CIP): OTP for Password Reset";
+    const subject =
+      "Communication Improvement Program (CIP): OTP for Password Reset";
     const htmlTemplate = otpEmailTemplate(+otpPlain, otp_expiry_minutes);
 
     const emailResponse = await sendEmail(
@@ -294,13 +303,13 @@ const refactorUserData = async (req: Request, res: Response): Promise<any> => {
   try {
     const users: User[] = await userRepository
       .createQueryBuilder()
-      .where('id = :id', { id: 1})
+      .where("id = :id", { id: 1 })
       .getMany();
-      
+
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST || "smtp.gmail.com",
       port: Number(process.env.EMAIL_PORT),
-      secure: false, 
+      secure: false,
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
@@ -317,11 +326,12 @@ const refactorUserData = async (req: Request, res: Response): Promise<any> => {
 
     const processingPromises = users.map(async (user) => {
       try {
-        
-        const newPass = generatePassword(8)
+        const newPass = generatePassword(8);
         const hashedPassword: string = await bcrypt.hash(newPass, 10);
-        const updatedUser = await userRepository.update(user.id, { password: hashedPassword });
-        
+        const updatedUser = await userRepository.update(user.id, {
+          password: hashedPassword,
+        });
+
         const htmlTemplate = registeredEmailTemplate(
           `${user.first_name} ${user.last_name}`,
           user.email,
@@ -329,30 +339,29 @@ const refactorUserData = async (req: Request, res: Response): Promise<any> => {
         );
 
         const mailOptions = {
-          from: process.env.FROM_EMAIL, 
+          from: process.env.FROM_EMAIL,
           to: user.email,
-          subject: "Get started with CIP", 
-          html: htmlTemplate, 
-          text: undefined, 
+          subject: "Get started with CIP",
+          html: htmlTemplate,
+          text: undefined,
         };
 
         await transporter.sendMail(mailOptions);
-        
+
         return updatedUser;
       } catch (error) {
         console.error(`Failed to process user ${user.email}:`, error);
         return null;
       }
     });
-    
+
     const processedUsers = await Promise.all(processingPromises);
     return res.status(200).json({ data: processedUsers });
-  } catch(err: any){
+  } catch (err: any) {
     const message = err.message || "Error while processing user details";
     return res.status(500).json({ message: message });
   }
 };
-
 
 export {
   loginUser,
@@ -360,5 +369,5 @@ export {
   verifyEmailAndGenerateOtpProcess,
   verifyOtpAndGenerateResetTokenProcess,
   verifyOtpTokenProcess,
-  refactorUserData
+  refactorUserData,
 };
