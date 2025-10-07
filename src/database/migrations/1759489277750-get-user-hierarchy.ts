@@ -98,6 +98,7 @@ export class GetUserHierarchy1759489277750 implements MigrationInterface {
                   )
                   AND uh.is_active = true 
                   AND uh.reporting_person_id IS NOT NULL
+                  OR uh.id = root_user_id
           )
           SELECT
               (SELECT COUNT(*) FROM filtered_hierarchy) AS total_count,
