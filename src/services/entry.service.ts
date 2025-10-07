@@ -166,7 +166,7 @@ const verifyEmailAndGenerateOtpProcess = async (
       });
     }
 
-    const otpPlain = generateOtpPlain(6).trim();
+    const otpPlain = generateOtpPlain().trim();
     const otp_expiry_minutes = parseInt(OTP_EXPIRES_MIN.replace("m", ""), 10);
     const otpExpiry = addMinutes(new Date(), otp_expiry_minutes);
 
