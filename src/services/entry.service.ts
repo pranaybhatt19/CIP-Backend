@@ -51,10 +51,26 @@ const loginUser = async (req: Request, res: Response): Promise<any> => {
       return res.status(403).json({ message: "User account is inactive" });
     }
 
+    const now = new Date();
+    const start = new Date(userDetails.experience);
+
+    let years = now.getFullYear() - start.getFullYear();
+    let months = now.getMonth() - start.getMonth();
+
+    if (now.getDate() < start.getDate()) months -= 1;
+
+    if (months < 0) {
+      years -= 1;
+      months += 12;
+    }
+
+    const experience = years < 0 ? 0 : +(years + months / 100).toFixed(2);
+
     const tokenPayload: any = {
       sub: userDetails.id,
       email: userDetails.email,
       name: userDetails.full_name,
+      experience: experience,
       designation: {
         id: userDetails.designation.id,
         name: userDetails.designation.name,
@@ -64,8 +80,8 @@ const loginUser = async (req: Request, res: Response): Promise<any> => {
             sub: userDetails?.reporting_person?.id,
             name: userDetails?.reporting_person?.full_name,
             designation: {
-              id: userDetails?.designation.id,
-              name: userDetails?.designation.name,
+              id: userDetails?.reporting_person?.designation.id,
+              name: userDetails?.reporting_person?.designation.name,
             },
           }
         : null,
