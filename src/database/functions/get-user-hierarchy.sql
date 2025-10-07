@@ -90,7 +90,7 @@ DROP FUNCTION IF EXISTS cip_schema.get_user_hierarchy(
                       (attempts_type = 'EQUALS' AND uh.attempts_count = attempts_value)
                   )
                   AND uh.is_active = true 
-                  AND (uh.id != root_user_id OR uh.attempts_count > 0)
+                  AND uh.reporting_person_id IS NOT NULL
           )
           SELECT
               (SELECT COUNT(*) FROM filtered_hierarchy) AS total_count,

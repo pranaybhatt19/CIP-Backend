@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class GetUserHierarchy1759489277749 implements MigrationInterface {
-  name = "GetUserHierarchy1759489277749";
+export class GetUserHierarchy1759489277750 implements MigrationInterface {
+  name = "GetUserHierarchy1759489277750";
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
@@ -97,7 +97,7 @@ export class GetUserHierarchy1759489277749 implements MigrationInterface {
                       (attempts_type = 'EQUALS' AND uh.attempts_count = attempts_value)
                   )
                   AND uh.is_active = true 
-                  AND (uh.id != root_user_id OR uh.attempts_count > 0)
+                  AND uh.reporting_person_id IS NOT NULL
           )
           SELECT
               (SELECT COUNT(*) FROM filtered_hierarchy) AS total_count,
