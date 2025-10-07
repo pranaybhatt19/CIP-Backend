@@ -83,7 +83,7 @@ export function otpEmailTemplate(otp: any, otp_expiry_minutes: any) {
               <!-- Hero / OTP -->
               <tr>
                 <td style="padding:28px 24px; text-align:center;">
-                  <h1 class="hero-title" style="margin:0 0 12px 0; font-size:24px; line-height:1.2; color:#2a9d8f;">Your OTP Code</h1>
+                  <h1 class="hero-title" style="margin:0 0 12px 0; font-size:24px; line-height:1.2; color:#2a9d8f;">YOUR OTP CODE</h1>
 
                   <p style="margin:0 0 18px 0; color:#334155;">Great to see you aboard! Use the following One-Time Password (OTP) to complete your action. Do not share this code with anyone.</p>
 

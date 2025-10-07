@@ -56,7 +56,7 @@ const registerUser = async (req: Request, res: Response): Promise<any> => {
 
     const newUserPayload: User = await userRepository.save(newUser);
 
-    const subject = "Get started with CIP";
+    const subject = "Get started with Communication Improvement Program (CIP)";
     const htmlTemplate = registeredEmailTemplate(
       `${firstName} ${lastName}`,
       newUserPayload.email,
