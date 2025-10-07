@@ -43,6 +43,10 @@ export const searchUsersSchema = {
 
     attempts: totalAttemptsSchema.optional(),
 
+    isTreeView: Joi.boolean().optional().messages({
+      "boolean.base": "isTreeView must be a boolean value (true or false)",
+    }),
+
     limit: Joi.number().integer().positive().optional().messages({
       "number.base": "Limit must be a number",
       "number.integer": "Limit must be an integer",

@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class GetUserHierarchy1759489277748 implements MigrationInterface {
-  name = "GetUserHierarchy1759489277748";
+export class GetUserHierarchy1759489277749 implements MigrationInterface {
+  name = "GetUserHierarchy1759489277749";
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
@@ -48,6 +48,7 @@ export class GetUserHierarchy1759489277748 implements MigrationInterface {
                   rp.full_name::text AS reporting_person_name,
                   u.designation_id,
                   d.name::text AS designation_name,
+                  u.is_active,
                   (DATE_PART('year', AGE(NOW(), u.experience)) 
                       + DATE_PART('month', AGE(NOW(), u.experience)) / 100)::numeric AS experience_years,
                   (SELECT COUNT(*) FROM cip_schema.communications c WHERE c.user_id = u.id)::bigint AS attempts_count
@@ -67,6 +68,7 @@ export class GetUserHierarchy1759489277748 implements MigrationInterface {
                   rp.full_name::text AS reporting_person_name,
                   u.designation_id,
                   d.name::text AS designation_name,
+                  u.is_active,
                   (DATE_PART('year', AGE(NOW(), u.experience)) 
                       + DATE_PART('month', AGE(NOW(), u.experience)) / 100)::numeric AS experience_years,
                   (SELECT COUNT(*) FROM cip_schema.communications c WHERE c.user_id = u.id)::bigint AS attempts_count
@@ -79,7 +81,7 @@ export class GetUserHierarchy1759489277748 implements MigrationInterface {
               SELECT *
               FROM user_hierarchy uh
               WHERE
-                 (name_filter IS NULL OR uh.full_name ILIKE '%' || name_filter || '%')
+                  (name_filter IS NULL OR uh.full_name ILIKE '%' || name_filter || '%')
                   AND (designation_ids IS NULL OR uh.designation_id = ANY(designation_ids))
                   AND (reporting_person_ids IS NULL OR uh.reporting_person_id = ANY(reporting_person_ids))
                   AND (
@@ -94,6 +96,8 @@ export class GetUserHierarchy1759489277748 implements MigrationInterface {
                       (attempts_type = 'GREATER_THAN' AND uh.attempts_count > attempts_value) OR
                       (attempts_type = 'EQUALS' AND uh.attempts_count = attempts_value)
                   )
+                  AND uh.is_active = true 
+                  AND (uh.id != root_user_id OR uh.attempts_count > 0)
           )
           SELECT
               (SELECT COUNT(*) FROM filtered_hierarchy) AS total_count,
