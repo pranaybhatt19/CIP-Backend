@@ -7,6 +7,7 @@ import {
   searchUsers,
   getDesignations,
   getReportingPersons,
+  registerNewUser,
 } from "../controllers/user.controller";
 import dtoValidation from "../middlewares/dto-validation.middleware";
 import { AddPracticeDto, UpdateUserDto } from "../dto";
@@ -15,7 +16,7 @@ import { searchUsersSchema } from "../utils/validation-schema/search-users.valid
 
 const userRouter = Router();
 
-// userRouter.post("/register", registerNewUser); // No use-case
+userRouter.post("/register", registerNewUser);
 
 // POST Requests
 userRouter.post("/add-practice", dtoValidation(AddPracticeDto), addPractice);
@@ -27,7 +28,6 @@ userRouter.post(
 userRouter.post("/user-practices", getUsersPracticeDetails);
 userRouter.get("/get-designations", getDesignations);
 userRouter.get("/get-reporting-persons", getReportingPersons);
-
 
 // PATCH Requests
 userRouter.patch("/delete-practice/:id", deletePractice);

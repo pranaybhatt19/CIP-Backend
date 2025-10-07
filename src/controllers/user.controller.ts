@@ -7,11 +7,13 @@ import {
   searchUsersFilter,
   getDesignationsList,
   getReportingPersonsList,
+  registerUser,
 } from "../services/user.service";
 
-// const registerNewUser = async(req: Request, res: Response) => {
-//     return await registerUser(req, res);
-// }
+const registerNewUser = async (req: Request, res: Response) => {
+  return await registerUser(req, res);
+};
+
 const searchUsers = async (req: Request, res: Response) => {
   return await searchUsersFilter(req, res);
 };
@@ -41,7 +43,7 @@ const deletePractice = async (req: Request, res: Response) => {
 };
 
 export {
-  // registerNewUser,
+  registerNewUser,
   getReportingPersons,
   getDesignations,
   searchUsers,
