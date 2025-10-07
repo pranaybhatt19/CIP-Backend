@@ -4,6 +4,7 @@ import { createToken, verifyToken } from "../utils/jwt-manager";
 import { LoginDto } from "../dto/entry/login.dto";
 import { User } from "../entities";
 import {
+  calculateExperience,
   generateOtpPlain,
   generatePassword,
   hashValue,
@@ -59,20 +60,7 @@ const loginUser = async (req: Request, res: Response): Promise<any> => {
       return res.status(403).json({ message: "User account is inactive" });
     }
 
-    const now = new Date();
-    const start = new Date(userDetails.experience);
-
-    let years = now.getFullYear() - start.getFullYear();
-    let months = now.getMonth() - start.getMonth();
-
-    if (now.getDate() < start.getDate()) months -= 1;
-
-    if (months < 0) {
-      years -= 1;
-      months += 12;
-    }
-
-    const experience = years < 0 ? 0 : +(years + months / 100).toFixed(2);
+    const experience = calculateExperience(userDetails.experience);
 
     const tokenPayload: any = {
       sub: userDetails.id,
