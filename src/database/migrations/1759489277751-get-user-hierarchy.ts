@@ -1,12 +1,12 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class GetUserHierarchy1759489277750 implements MigrationInterface {
-  name = "GetUserHierarchy1759489277750";
+export class GetUserHierarchy1759489277751 implements MigrationInterface {
+  name = "GetUserHierarchy1759489277751";
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
-       DROP FUNCTION IF EXISTS cip_schema.get_user_hierarchy(
-      integer, text, integer[], integer[], text, numeric, text, numeric, integer, integer, text, text
+      DROP FUNCTION IF EXISTS cip_schema.get_user_hierarchy(
+        integer, text, integer[], integer[], text, numeric, text, numeric, integer, integer, text, text
       );
 
       CREATE FUNCTION cip_schema.get_user_hierarchy(
@@ -32,17 +32,19 @@ export class GetUserHierarchy1759489277750 implements MigrationInterface {
           reporting_person json,
           designation json,
           experience_years numeric,
-          attempts_count bigint
+          attempts_count bigint,
+          last_communication_date timestamp
       )
       LANGUAGE plpgsql
       AS $$
       BEGIN
           RETURN QUERY
           WITH RECURSIVE user_hierarchy AS (
+           
               SELECT 
                   u.id,
-                  u.full_name::text,
                   concat(u.first_name, ' ', u.last_name)::text AS name,
+                  u.full_name::text,
                   u.email::text,
                   u.reporting_person_id,
                   rp.full_name::text AS reporting_person_name,
@@ -50,8 +52,7 @@ export class GetUserHierarchy1759489277750 implements MigrationInterface {
                   d.name::text AS designation_name,
                   u.is_active,
                   (DATE_PART('year', AGE(NOW(), u.experience)) 
-                      + DATE_PART('month', AGE(NOW(), u.experience)) / 100)::numeric AS experience_years,
-                  (SELECT COUNT(*) FROM cip_schema.communications c WHERE c.user_id = u.id)::bigint AS attempts_count
+                      + DATE_PART('month', AGE(NOW(), u.experience)) / 100)::numeric AS experience_years
               FROM cip_schema.users u
               LEFT JOIN cip_schema.users rp ON rp.id = u.reporting_person_id
               LEFT JOIN cip_schema.designations d ON d.id = u.designation_id
@@ -59,6 +60,7 @@ export class GetUserHierarchy1759489277750 implements MigrationInterface {
 
               UNION ALL
 
+             
               SELECT
                   u.id,
                   concat(u.first_name, ' ', u.last_name)::text AS name,
@@ -70,16 +72,30 @@ export class GetUserHierarchy1759489277750 implements MigrationInterface {
                   d.name::text AS designation_name,
                   u.is_active,
                   (DATE_PART('year', AGE(NOW(), u.experience)) 
-                      + DATE_PART('month', AGE(NOW(), u.experience)) / 100)::numeric AS experience_years,
-                  (SELECT COUNT(*) FROM cip_schema.communications c WHERE c.user_id = u.id)::bigint AS attempts_count
+                      + DATE_PART('month', AGE(NOW(), u.experience)) / 100)::numeric AS experience_years
               FROM cip_schema.users u
               INNER JOIN user_hierarchy h ON u.reporting_person_id = h.id
               LEFT JOIN cip_schema.users rp ON rp.id = u.reporting_person_id
               LEFT JOIN cip_schema.designations d ON d.id = u.designation_id
           ),
+
+        
+          user_with_comms AS (
+              SELECT
+                  uh.*,
+                  COALESCE(COUNT(cm.user_id), 0)::bigint AS attempts_count,
+                  MAX(cm.date)::timestamp AS last_communication_date
+              FROM user_hierarchy uh
+              LEFT JOIN cip_schema.communications cm ON cm.user_id = uh.id
+              GROUP BY 
+                  uh.id, uh.name, uh.full_name, uh.email, uh.reporting_person_id,
+                  uh.reporting_person_name, uh.designation_id, uh.designation_name,
+                  uh.is_active, uh.experience_years
+          ),
+
           filtered_hierarchy AS (
               SELECT *
-              FROM user_hierarchy uh
+              FROM user_with_comms uh
               WHERE
                   (name_filter IS NULL OR uh.full_name ILIKE '%' || name_filter || '%')
                   AND (designation_ids IS NULL OR uh.designation_id = ANY(designation_ids))
@@ -96,20 +112,22 @@ export class GetUserHierarchy1759489277750 implements MigrationInterface {
                       (attempts_type = 'GREATER_THAN' AND uh.attempts_count > attempts_value) OR
                       (attempts_type = 'EQUALS' AND uh.attempts_count = attempts_value)
                   )
-                  AND uh.is_active = true 
+                  AND uh.is_active = true
                   AND uh.reporting_person_id IS NOT NULL
                   OR (uh.id = root_user_id AND uh.reporting_person_id IS NOT NULL)
           )
+
           SELECT
               (SELECT COUNT(*) FROM filtered_hierarchy) AS total_count,
-              fh.name AS name,
+              fh.name,
               fh.id AS user_id,
               fh.full_name,
               fh.email,
               json_build_object('id', fh.reporting_person_id, 'name', fh.reporting_person_name) AS reporting_person,
               json_build_object('id', fh.designation_id, 'name', fh.designation_name) AS designation,
               fh.experience_years,
-              fh.attempts_count
+              fh.attempts_count,
+              fh.last_communication_date
           FROM filtered_hierarchy fh
           ORDER BY
               CASE WHEN order_field = 'full_name' AND order_direction = 'ASC' THEN fh.full_name END ASC,
@@ -121,7 +139,9 @@ export class GetUserHierarchy1759489277750 implements MigrationInterface {
               CASE WHEN order_field = 'reporting_person_name' AND order_direction = 'ASC' THEN fh.reporting_person_name END ASC,
               CASE WHEN order_field = 'reporting_person_name' AND order_direction = 'DESC' THEN fh.reporting_person_name END DESC,
               CASE WHEN order_field = 'attempts_count' AND order_direction = 'ASC' THEN fh.attempts_count END ASC,
-              CASE WHEN order_field = 'attempts_count' AND order_direction = 'DESC' THEN fh.attempts_count END DESC
+              CASE WHEN order_field = 'attempts_count' AND order_direction = 'DESC' THEN fh.attempts_count END DESC,
+              CASE WHEN order_field = 'last_communication_date' AND order_direction = 'ASC' THEN fh.last_communication_date END ASC,
+              CASE WHEN order_field = 'last_communication_date' AND order_direction = 'DESC' THEN fh.last_communication_date END DESC
           LIMIT limit_val
           OFFSET offset_val;
       END;
