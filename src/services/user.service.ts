@@ -205,23 +205,16 @@ const getPracticeDetailsByUserId = async (
       .leftJoinAndSelect("user.reporting_person", "reportingPerson")
       .where("user.id = :id", { id: numericId })
       .getOne();
-
+      
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    if (Number(req.user?.sub) !== id) {
-      if (
-        req.user?.reportingPerson &&
-        Number(req.user?.reportingPerson?.sub) !==
-          Number(user.reporting_person?.id)
-      ) {
-        return res.status(403).json({
-          message: "Not authorize to see other users information",
-        });
-      }
+    const allowed = await isAncestorOrSelf(user.id, Number(req.user?.sub));
+    if (!allowed) {
+      return res.status(403).json({ message: "Not authorized to see other user's information" });
     }
-
+    
     const queryBuilder = await communicationRepository
       .createQueryBuilder("practice")
       .where("practice.user_id = :userId", { userId: numericId })
@@ -313,6 +306,34 @@ const getPracticeDetailsByUserId = async (
       "Error fetching user communication practice detail, Internal server error";
     return res.status(500).json({ message: message });
   }
+};
+
+const isAncestorOrSelf = async (targetId: number, requesterId: number): Promise<boolean> => {
+  if (!targetId || !requesterId) return false;
+
+  const rows: any[] = await AppDataSource.query(
+    `
+    WITH RECURSIVE ancestors AS (
+      SELECT id, reporting_person_id, ARRAY[id] AS path
+      FROM cip_schema.users
+      WHERE id = $1
+
+      UNION ALL
+
+      SELECT u.id, u.reporting_person_id, a.path || u.id
+      FROM cip_schema.users u
+      JOIN ancestors a ON u.id = a.reporting_person_id
+      WHERE NOT u.id = ANY(a.path)
+    )
+    SELECT 1 AS ok
+    FROM ancestors
+    WHERE id = $2
+    LIMIT 1;
+    `,
+    [targetId, requesterId]
+  );
+
+  return rows.length > 0;
 };
 
 const deletePracticeResult = async (
