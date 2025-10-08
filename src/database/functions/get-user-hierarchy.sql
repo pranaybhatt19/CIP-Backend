@@ -18,7 +18,6 @@ DROP FUNCTION IF EXISTS cip_schema.get_user_hierarchy(
       )
       RETURNS TABLE(
           total_count bigint,
-          name text,
           user_id integer,
           full_name text,
           email text,
@@ -36,7 +35,6 @@ DROP FUNCTION IF EXISTS cip_schema.get_user_hierarchy(
            
               SELECT 
                   u.id,
-                  concat(u.first_name, ' ', u.last_name)::text AS name,
                   u.full_name::text,
                   u.email::text,
                   u.reporting_person_id,
@@ -52,11 +50,9 @@ DROP FUNCTION IF EXISTS cip_schema.get_user_hierarchy(
               WHERE u.id = root_user_id
 
               UNION ALL
-
              
               SELECT
                   u.id,
-                  concat(u.first_name, ' ', u.last_name)::text AS name,
                   u.full_name::text,
                   u.email::text,
                   u.reporting_person_id,
@@ -81,7 +77,7 @@ DROP FUNCTION IF EXISTS cip_schema.get_user_hierarchy(
               FROM user_hierarchy uh
               LEFT JOIN cip_schema.communications cm ON cm.user_id = uh.id
               GROUP BY 
-                  uh.id, uh.name, uh.full_name, uh.email, uh.reporting_person_id,
+                  uh.id, uh.full_name, uh.email, uh.reporting_person_id,
                   uh.reporting_person_name, uh.designation_id, uh.designation_name,
                   uh.is_active, uh.experience_years
           ),
@@ -112,7 +108,6 @@ DROP FUNCTION IF EXISTS cip_schema.get_user_hierarchy(
 
           SELECT
               (SELECT COUNT(*) FROM filtered_hierarchy) AS total_count,
-              fh.name,
               fh.id AS user_id,
               fh.full_name,
               fh.email,

@@ -451,7 +451,6 @@ const searchUsersFilter = async (
       const totalCount = rows.length > 0 ? parseInt(rows[0].total_count, 0) : 0;
       const data = rows.map((r: any) => ({
         user_id: r.user_id,
-        name: r.name,
         full_name: r.full_name,
         email: r.email,
         reporting_person: r.reporting_person,
