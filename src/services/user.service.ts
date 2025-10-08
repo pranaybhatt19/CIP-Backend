@@ -219,7 +219,6 @@ const getPracticeDetailsByUserId = async (
       .createQueryBuilder("practice")
       .where("practice.user_id = :userId", { userId: numericId })
       .andWhere("practice.is_deleted = :status", { status: false })
-      .orderBy("practice.id", "DESC");
 
     if (dateExact || dateFrom || dateTo) {
       if (dateFrom && dateTo) {
@@ -236,7 +235,7 @@ const getPracticeDetailsByUserId = async (
         const next = new Date(to);
         next.setDate(next.getDate() + 1);
         next.setHours(0, 0, 0, 0);
-        queryBuilder.andWhere("t.date >= :fromDay AND t.date < :toNextDay", {
+        queryBuilder.andWhere("practice.date >= :fromDay AND practice.date < :toNextDay", {
           fromDay: start.toISOString(),
           toNextDay: next.toISOString(),
         });
@@ -254,7 +253,7 @@ const getPracticeDetailsByUserId = async (
         const next = new Date(start);
         next.setDate(next.getDate() + 1);
 
-        queryBuilder.andWhere("t.date >= :startOfDay AND t.date < :nextDay", {
+        queryBuilder.andWhere("practice.date >= :startOfDay AND practice.date < :nextDay", {
           startOfDay: start.toISOString(),
           nextDay: next.toISOString(),
         });
@@ -276,7 +275,11 @@ const getPracticeDetailsByUserId = async (
           order_by.toUpperCase() as "ASC" | "DESC",
           "NULLS LAST"
         );
+      } else {
+        queryBuilder.orderBy("practice.date", "DESC");
       }
+    } else {
+      queryBuilder.orderBy("practice.date", "DESC");
     }
 
     if (limit) queryBuilder.take(limit);
