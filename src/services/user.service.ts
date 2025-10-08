@@ -203,22 +203,23 @@ const getPracticeDetailsByUserId = async (
     const user: User | null = await userRepository
       .createQueryBuilder("user")
       .leftJoinAndSelect("user.reporting_person", "reportingPerson")
+      .leftJoinAndSelect("reportingPerson.reporting_person", "superReportingPerson")
       .where("user.id = :id", { id: numericId })
       .getOne();
-
+      
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    if (Number(req.user?.sub) !== id) {
-      if (
-        req.user?.reportingPerson &&
-        Number(req.user?.reportingPerson?.sub) !==
-          Number(user.reporting_person?.id)
-      ) {
-        return res.status(403).json({
-          message: "Not authorize to see other users information",
-        });
+    if (Number(req.user?.sub) !== id && Number(req.user?.sub) !== Number(user?.reporting_person?.id)) {
+      {
+        if(req.user?.reportingPerson?.sub && (
+          req.user?.reportingPerson?.sub !== user?.reporting_person?.id || 
+          (req.user?.reportingPerson?.sub !== user?.reporting_person?.reporting_person?.id && user?.reporting_person?.reporting_person?.id !== null))){
+          return res.status(403).json({
+            message: "Not authorize to see other users information",
+          });
+        }
       }
     }
 
