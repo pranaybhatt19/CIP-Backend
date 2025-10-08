@@ -25,6 +25,24 @@ const totalAttemptsSchema = Joi.object({
   }),
 });
 
+const lastCommunicationDateSchema = Joi.object({
+  exactDate: Joi.date().iso().optional().messages({
+    "date.base": `"exactDate" must be a valid date`,
+    "date.format": `"exactDate" must be in ISO format`,
+  }),
+
+  fromDate: Joi.date().iso().optional().messages({
+    "date.base": `"fromDate" must be a valid date`,
+    "date.format": `"fromDate" must be in ISO format`,
+  }),
+
+  toDate: Joi.date().iso().optional().greater(Joi.ref("fromDate")).messages({
+    "date.base": `"toDate" must be a valid date`,
+    "date.greater": `"toDate" must be greater than "fromDate"`,
+    "date.format": `"toDate" must be in ISO format`,
+  }),
+});
+
 export const searchUsersSchema = {
   [Segments.BODY]: Joi.object({
     name: Joi.string().trim().min(2).max(100).optional(),
@@ -42,6 +60,8 @@ export const searchUsersSchema = {
       .optional(),
 
     attempts: totalAttemptsSchema.optional(),
+
+    last_communication_date: lastCommunicationDateSchema,
 
     isTreeView: Joi.boolean().optional().messages({
       "boolean.base": "isTreeView must be a boolean value (true or false)",

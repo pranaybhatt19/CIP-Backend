@@ -417,6 +417,7 @@ const searchUsersFilter = async (
       reporting_persons_ids: rawReportingPersonIds,
       experience,
       attempts,
+      last_communication_date,
       limit,
       offset,
       order,
@@ -437,13 +438,18 @@ const searchUsersFilter = async (
       experience?.value ?? null,
       attempts?.type ?? null,
       attempts?.value ?? null,
+      last_communication_date?.exactDate ?? null,
+      last_communication_date?.fromDate ?? null,
+      last_communication_date?.toDate ?? null,
       limit ?? null,
       offset ?? 0,
       order?.[0]?.[0] ?? "full_name",
       order?.[0]?.[1] ?? "ASC",
     ];
-
-    const sql = `SELECT * FROM cip_schema.get_user_hierarchy($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11,$12)`;
+    const functionName = isTreeView
+      ? "get_user_tree_hierarchy"
+      : "get_user_hierarchy";
+    const sql = `SELECT * FROM cip_schema.${functionName}($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`;
 
     const rows = await AppDataSource.manager.query(sql, values);
     if (!isTreeView) {
