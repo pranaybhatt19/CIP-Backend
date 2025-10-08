@@ -258,6 +258,27 @@ const getPracticeDetailsByUserId = async (
           nextDay: next.toISOString(),
         });
       }
+      if (dateFrom) {
+        const from = parseToDate(dateFrom);
+        if (!from)
+          return res.status(400).json({ message: "Invalid dateFrom format." });
+        const start = new Date(from);
+        start.setHours(0, 0, 0, 0);
+        queryBuilder.andWhere("practice.date >= :startOfDay", {
+          startOfDay: start.toISOString(),
+        });
+      } 
+      if (dateTo) {
+        const to = parseToDate(dateTo);
+        if (!to)
+          return res.status(400).json({ message: "Invalid dateTo format." });
+        const next = new Date(to);
+        next.setDate(next.getDate() + 1);
+        next.setHours(0, 0, 0, 0);
+        queryBuilder.andWhere("practice.date < :toNextDay", {
+          toNextDay: next.toISOString(),
+        });
+      }
     }
 
     if (order && order.length > 0) {
