@@ -265,7 +265,7 @@ const getPracticeDetailsByUserId = async (
           startOfDay: start.toISOString(),
           nextDay: next.toISOString(),
         });
-      } 
+      }
     }
 
     if (order && order.length > 0) {
@@ -449,6 +449,7 @@ const searchUsersFilter = async (
         designation: r.designation,
         experience: r.experience_years,
         attempts: parseInt(r.attempts_count, 0),
+        last_communication_date: r.last_communication_date,
       }));
       return res.status(200).json({
         data: { totalCount, data },
