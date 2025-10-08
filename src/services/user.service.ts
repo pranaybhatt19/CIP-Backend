@@ -394,7 +394,15 @@ const buildUserHierarchy = (users: User[], currentUserId: number) => {
       roots.push(userMap[user.user_id]);
     }
   });
-  return userMap[currentUserId];
+  if (userMap[currentUserId]) {
+    return userMap[currentUserId];
+  } else {
+    const directReports = users
+      .filter((user: any) => user.reporting_person?.id === currentUserId)
+      .map((user: any) => userMap[user.user_id]);
+
+    return directReports.length > 0 ? directReports : [];
+  }
 };
 
 const searchUsersFilter = async (
@@ -458,6 +466,7 @@ const searchUsersFilter = async (
       });
     } else {
       const hierarchy = buildUserHierarchy(rows, Number(user?.sub));
+
       return res.status(200).json({
         data: { data: hierarchy },
         message: "Users fetched successfully",
