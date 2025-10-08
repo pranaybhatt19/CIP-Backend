@@ -26,21 +26,30 @@ const totalAttemptsSchema = Joi.object({
 });
 
 const lastCommunicationDateSchema = Joi.object({
-  exactDate: Joi.date().iso().optional().messages({
+  exactDate: Joi.date().iso().allow(null).optional().messages({
     "date.base": `"exactDate" must be a valid date`,
     "date.format": `"exactDate" must be in ISO format`,
   }),
 
-  fromDate: Joi.date().iso().optional().messages({
+  fromDate: Joi.date().iso().allow(null).optional().messages({
     "date.base": `"fromDate" must be a valid date`,
     "date.format": `"fromDate" must be in ISO format`,
   }),
 
-  toDate: Joi.date().iso().optional().greater(Joi.ref("fromDate")).messages({
-    "date.base": `"toDate" must be a valid date`,
-    "date.greater": `"toDate" must be greater than "fromDate"`,
-    "date.format": `"toDate" must be in ISO format`,
-  }),
+  toDate: Joi.date()
+    .iso()
+    .allow(null)
+    .optional()
+    .when("fromDate", {
+      is: Joi.date().iso(),
+      then: Joi.date().greater(Joi.ref("fromDate")),
+      otherwise: Joi.date().allow(null),
+    })
+    .messages({
+      "date.base": `"toDate" must be a valid date`,
+      "date.greater": `"toDate" must be greater than "fromDate"`,
+      "date.format": `"toDate" must be in ISO format`,
+    }),
 });
 
 export const searchUsersSchema = {
