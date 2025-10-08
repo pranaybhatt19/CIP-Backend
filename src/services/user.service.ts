@@ -203,7 +203,6 @@ const getPracticeDetailsByUserId = async (
     const user: User | null = await userRepository
       .createQueryBuilder("user")
       .leftJoinAndSelect("user.reporting_person", "reportingPerson")
-      .leftJoinAndSelect("reportingPerson.reporting_person", "superReportingPerson")
       .where("user.id = :id", { id: numericId })
       .getOne();
       
@@ -211,18 +210,11 @@ const getPracticeDetailsByUserId = async (
       return res.status(404).json({ message: "User not found" });
     }
 
-    if (Number(req.user?.sub) !== id && Number(req.user?.sub) !== Number(user?.reporting_person?.id)) {
-      {
-        if(req.user?.reportingPerson?.sub && (
-          req.user?.reportingPerson?.sub !== user?.reporting_person?.id || 
-          (req.user?.reportingPerson?.sub !== user?.reporting_person?.reporting_person?.id && user?.reporting_person?.reporting_person?.id !== null))){
-          return res.status(403).json({
-            message: "Not authorize to see other users information",
-          });
-        }
-      }
+    const allowed = await isAncestorOrSelf(user.id, Number(req.user?.sub));
+    if (!allowed) {
+      return res.status(403).json({ message: "Not authorized to see other user's information" });
     }
-
+    
     const queryBuilder = await communicationRepository
       .createQueryBuilder("practice")
       .where("practice.user_id = :userId", { userId: numericId })
@@ -314,6 +306,34 @@ const getPracticeDetailsByUserId = async (
       "Error fetching user communication practice detail, Internal server error";
     return res.status(500).json({ message: message });
   }
+};
+
+const isAncestorOrSelf = async (targetId: number, requesterId: number): Promise<boolean> => {
+  if (!targetId || !requesterId) return false;
+
+  const rows: any[] = await AppDataSource.query(
+    `
+    WITH RECURSIVE ancestors AS (
+      SELECT id, reporting_person_id, ARRAY[id] AS path
+      FROM cip_schema.users
+      WHERE id = $1
+
+      UNION ALL
+
+      SELECT u.id, u.reporting_person_id, a.path || u.id
+      FROM cip_schema.users u
+      JOIN ancestors a ON u.id = a.reporting_person_id
+      WHERE NOT u.id = ANY(a.path)
+    )
+    SELECT 1 AS ok
+    FROM ancestors
+    WHERE id = $2
+    LIMIT 1;
+    `,
+    [targetId, requesterId]
+  );
+
+  return rows.length > 0;
 };
 
 const deletePracticeResult = async (
@@ -451,6 +471,7 @@ const searchUsersFilter = async (
       const totalCount = rows.length > 0 ? parseInt(rows[0].total_count, 0) : 0;
       const data = rows.map((r: any) => ({
         user_id: r.user_id,
+        name: r.name,
         full_name: r.full_name,
         email: r.email,
         reporting_person: r.reporting_person,
