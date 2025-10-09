@@ -205,20 +205,22 @@ const getPracticeDetailsByUserId = async (
       .leftJoinAndSelect("user.reporting_person", "reportingPerson")
       .where("user.id = :id", { id: numericId })
       .getOne();
-      
+
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
     const allowed = await isAncestorOrSelf(user.id, Number(req.user?.sub));
     if (!allowed) {
-      return res.status(403).json({ message: "Not authorized to see other user's information" });
+      return res
+        .status(403)
+        .json({ message: "Not authorized to see other user's information" });
     }
-    
+
     const queryBuilder = await communicationRepository
       .createQueryBuilder("practice")
       .where("practice.user_id = :userId", { userId: numericId })
-      .andWhere("practice.is_deleted = :status", { status: false })
+      .andWhere("practice.is_deleted = :status", { status: false });
 
     if (dateExact || dateFrom || dateTo) {
       if (dateFrom && dateTo) {
@@ -235,10 +237,13 @@ const getPracticeDetailsByUserId = async (
         const next = new Date(to);
         next.setDate(next.getDate() + 1);
         next.setHours(0, 0, 0, 0);
-        queryBuilder.andWhere("practice.date >= :fromDay AND practice.date < :toNextDay", {
-          fromDay: start.toISOString(),
-          toNextDay: next.toISOString(),
-        });
+        queryBuilder.andWhere(
+          "practice.date >= :fromDay AND practice.date < :toNextDay",
+          {
+            fromDay: start.toISOString(),
+            toNextDay: next.toISOString(),
+          }
+        );
       }
       if (dateExact) {
         const date = parseToDate(dateExact);
@@ -253,10 +258,13 @@ const getPracticeDetailsByUserId = async (
         const next = new Date(start);
         next.setDate(next.getDate() + 1);
 
-        queryBuilder.andWhere("practice.date >= :startOfDay AND practice.date < :nextDay", {
-          startOfDay: start.toISOString(),
-          nextDay: next.toISOString(),
-        });
+        queryBuilder.andWhere(
+          "practice.date >= :startOfDay AND practice.date < :nextDay",
+          {
+            startOfDay: start.toISOString(),
+            nextDay: next.toISOString(),
+          }
+        );
       }
       if (dateFrom) {
         const from = parseToDate(dateFrom);
@@ -267,7 +275,7 @@ const getPracticeDetailsByUserId = async (
         queryBuilder.andWhere("practice.date >= :startOfDay", {
           startOfDay: start.toISOString(),
         });
-      } 
+      }
       if (dateTo) {
         const to = parseToDate(dateTo);
         if (!to)
@@ -332,7 +340,10 @@ const getPracticeDetailsByUserId = async (
   }
 };
 
-const isAncestorOrSelf = async (targetId: number, requesterId: number): Promise<boolean> => {
+const isAncestorOrSelf = async (
+  targetId: number,
+  requesterId: number
+): Promise<boolean> => {
   if (!targetId || !requesterId) return false;
 
   const rows: any[] = await AppDataSource.query(
@@ -457,7 +468,7 @@ const searchUsersFilter = async (
     const user = req.user;
 
     const {
-      name: nameFilter,
+      full_name: nameFilter,
       designation_ids: rawDesignationIds,
       reporting_persons_ids: rawReportingPersonIds,
       experience,
@@ -501,7 +512,6 @@ const searchUsersFilter = async (
       const totalCount = rows.length > 0 ? parseInt(rows[0].total_count, 0) : 0;
       const data = rows.map((r: any) => ({
         user_id: r.user_id,
-        name: r.name,
         full_name: r.full_name,
         email: r.email,
         reporting_person: r.reporting_person,

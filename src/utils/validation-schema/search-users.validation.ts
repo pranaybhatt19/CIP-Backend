@@ -54,7 +54,7 @@ const lastCommunicationDateSchema = Joi.object({
 
 export const searchUsersSchema = {
   [Segments.BODY]: Joi.object({
-    name: Joi.string().trim().min(2).max(100).optional(),
+    full_name: Joi.string().trim().min(2).max(100).optional(),
 
     designation_ids: Joi.array()
       .items(Joi.number().integer())
