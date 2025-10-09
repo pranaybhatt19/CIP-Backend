@@ -138,7 +138,7 @@ export function registeredEmailTemplate(userName: string, email: string, passwor
             <tr>
               <td style="padding:28px 24px;">
                 <h1 class="hero-title" style="margin:0 0 12px 0; font-size:24px; line-height:1.2; color:#2a9d8f;">Welcome aboard, ${userName}!</h1>
-                <p style="margin:0 0 18px 0; color:#334155;">We're delighted to have you on Communication Improvement Program (CIP). Below are your initial login credentials — please update your password and sign in.</p>
+                <p style="margin:0 0 18px 0; color:#334155;">We're delighted to have you on Communication Improvement Portal (CIP). Below are your initial login credentials — please update your password and sign in.</p>
 
                 <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin:18px 0; background:#f8fafc; border-radius:8px; padding:14px;">
                   <tr>
@@ -164,7 +164,7 @@ export function registeredEmailTemplate(userName: string, email: string, passwor
 
                 <p style="margin:12px 0 6px 0; font-size:14px; color:#334155;">
                   Change your password here:
-                  <a href="http://cip.web4.anasource.com/forgot-password" style="color:#2a9d8f; font-weight:600;">Reset password</a>
+                  <a href="http://cip.web4.anasource.com/change-password" style="color:#2a9d8f; font-weight:600;">Reset password</a>
                 </p>
 
                 <hr style="border:none; border-top:1px solid #eef2f7; margin:18px 0;">

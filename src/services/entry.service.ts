@@ -178,7 +178,7 @@ const verifyEmailAndGenerateOtpProcess = async (
       });
     }
 
-    const otpPlain = generateOtpPlain().trim();
+    const otpPlain = generateOtpPlain();
     const otp_expiry_minutes = parseInt(OTP_EXPIRES_MIN.replace("m", ""), 10);
     const otpExpiry = addMinutes(new Date(), otp_expiry_minutes);
 
@@ -193,8 +193,8 @@ const verifyEmailAndGenerateOtpProcess = async (
     await userRepository.save(userDetails);
 
     const subject =
-      "Communication Improvement Program (CIP): OTP for Password Reset";
-    const htmlTemplate = otpEmailTemplate(+otpPlain, otp_expiry_minutes);
+      "Communication Improvement Portal (CIP): OTP for Password Reset";
+    const htmlTemplate = otpEmailTemplate(otpPlain, otp_expiry_minutes);
 
     const emailResponse = await sendEmail(
       userDetails.email,
@@ -291,9 +291,9 @@ const refactorUserData = async (req: Request, res: Response): Promise<any> => {
   try {
     const users: User[] = await userRepository
       .createQueryBuilder()
-      .where("id = :id", { id: 1 })
       .getMany();
-
+      
+      // .where("id = :id", { id: 82 })
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST || "smtp.gmail.com",
       port: Number(process.env.EMAIL_PORT),
