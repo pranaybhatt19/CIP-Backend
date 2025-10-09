@@ -583,6 +583,51 @@ const getDesignationsList = async (
   }
 };
 
+const getUserCompleteDetails = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({ message: "User Id is required" });
+    }
+
+    const userData: User | null = await userRepository
+      .createQueryBuilder("user")
+      .leftJoinAndSelect("user.designation", "designations")
+      .leftJoinAndSelect('user.reporting_person', 'reportingPerson')
+      .leftJoinAndSelect('reportingPerson.designation', 'roDesignation')
+      .where("id = :userId", { userId: id })
+      .select([
+        'user.full_name',
+        'user.first_name',
+        'user.middle_name',
+        'user.last_name',
+        'user.email',
+        'user.experience',
+        'user.is_active',
+        'user.medium_of_education',
+        'designations.name',
+        'reportingPerson.name',
+        'roDesignation.name',
+      ])
+      .getOne();
+
+    if(!userData){
+      return res.status(400).json({
+        message: "User details now found for this user id, Please try again.",
+        payload: null
+      })
+    }
+
+    return res.status(200).json({
+      message: "User details fetched successfully",
+      payload: userData
+    })
+  } catch(err: any){
+    return res.status(500).json({ message: err.message || "Something went wrong while fetching user data" });
+  }
+}
+
 export {
   registerUser,
   searchUsersFilter,
@@ -592,4 +637,5 @@ export {
   updateUserDetails,
   deletePracticeResult,
   getPracticeDetailsByUserId,
+  getUserCompleteDetails
 };

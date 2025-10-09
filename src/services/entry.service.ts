@@ -66,23 +66,21 @@ const loginUser = async (req: Request, res: Response): Promise<any> => {
       sub: userDetails.id,
       email: userDetails.email,
       name: userDetails.full_name,
-      experience: experience,
       designation: {
         id: userDetails.designation.id,
         name: userDetails.designation.name,
       },
-      reportingPerson: userDetails?.reporting_person
-        ? {
-            sub: userDetails?.reporting_person?.id,
-            name: userDetails?.reporting_person?.full_name,
-            designation: {
-              id: userDetails?.reporting_person?.designation.id,
-              name: userDetails?.reporting_person?.designation.name,
-            },
-          }
-        : null,
       activeStatus: userDetails.is_active,
-      mediumOfEducation: userDetails.medium_of_education
+      mediumOfEducation: userDetails.medium_of_education,
+      // experience: experience,
+      // reportingPerson: userDetails?.reporting_person ? {
+      //  sub: userDetails?.reporting_person?.id,
+      //  name: userDetails?.reporting_person?.full_name,
+      //  designation: {
+      //    id: userDetails?.reporting_person?.designation.id,
+      //    name: userDetails?.reporting_person?.designation.name,
+      //  },
+      // } : null,
     };
     const token: string = createToken(tokenPayload);
 

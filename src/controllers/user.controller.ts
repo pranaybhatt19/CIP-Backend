@@ -8,6 +8,7 @@ import {
   getDesignationsList,
   getReportingPersonsList,
   registerUser,
+  getUserCompleteDetails,
 } from "../services/user.service";
 
 const registerNewUser = async (req: Request, res: Response) => {
@@ -42,6 +43,10 @@ const deletePractice = async (req: Request, res: Response) => {
   return await deletePracticeResult(req, res);
 };
 
+const getUsersDetails = async (req: Request, res: Response) => {
+  return await getUserCompleteDetails(req, res);
+}
+
 export {
   registerNewUser,
   getReportingPersons,
@@ -51,4 +56,5 @@ export {
   updateUser,
   getUsersPracticeDetails,
   deletePractice,
+  getUsersDetails
 };

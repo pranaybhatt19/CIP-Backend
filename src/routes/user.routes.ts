@@ -8,6 +8,7 @@ import {
   getDesignations,
   getReportingPersons,
   registerNewUser,
+  getUsersDetails,
 } from "../controllers/user.controller";
 import dtoValidation from "../middlewares/dto-validation.middleware";
 import { AddPracticeDto, UpdateUserDto } from "../dto";
@@ -16,9 +17,14 @@ import { searchUsersSchema } from "../utils/validation-schema/search-users.valid
 
 const userRouter = Router();
 
-userRouter.post("/register", registerNewUser);
+// GET Requests
+userRouter.get("/get-designations", getDesignations);
+userRouter.get("/get-reporting-persons", getReportingPersons);
+userRouter.get("/get-user-details/:id", getUsersDetails);
+
 
 // POST Requests
+userRouter.post("/register", registerNewUser);
 userRouter.post("/add-practice", dtoValidation(AddPracticeDto), addPractice);
 userRouter.post(
   "/update-user-details",
@@ -27,8 +33,7 @@ userRouter.post(
 );
 userRouter.post("/searchUsers", celebrate(searchUsersSchema), searchUsers);
 userRouter.post("/user-practices", getUsersPracticeDetails);
-userRouter.get("/get-designations", getDesignations);
-userRouter.get("/get-reporting-persons", getReportingPersons);
+
 
 // PATCH Requests
 userRouter.patch("/delete-practice/:id", deletePractice);
