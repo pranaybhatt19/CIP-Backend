@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { isCelebrateError, CelebrateError, errors } from "celebrate";
+import { isCelebrateError, CelebrateError } from "celebrate";
 import errorMiddleware from "./middlewares/error.middleware";
 import express from "express";
 import cors from "cors";
@@ -27,8 +27,6 @@ app.use(express.json());
 app.use("/api", entryRoutes);
 app.use("/api/auth/users", authenticate, userRoutes);
 
-app.use(errors());
-
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   if (isCelebrateError(err)) {
     const errorBody = err as CelebrateError;
@@ -36,8 +34,8 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
       if (joiError && joiError.details.length > 0) {
         const firstError = joiError.details[0];
         return res.status(400).json({
+          statusCode: 400,
           message: firstError.message.replace(/['"]/g, ""),
-          field: firstError.path.join("."),
         });
       }
     }
