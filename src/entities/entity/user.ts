@@ -28,6 +28,9 @@ export class User extends BaseEntity {
   @Column({ type: "boolean", default: true })
   is_active!: boolean;
 
+  @Column({ type: "varchar", length: 100 })
+  medium_of_education!: string;
+
   @ManyToOne(() => User, { nullable: true })
   @JoinColumn({ name: "reporting_person_id" })
   reporting_person?: User;

@@ -11,6 +11,10 @@ export class UpdateUserDto {
     @IsOptional()
     password?: string;
 
+    @IsString()
+    @IsOptional()
+    educationLanguage?: string;
+
     @IsOptional()
     @IsBoolean()
     status?: boolean;

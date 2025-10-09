@@ -90,7 +90,7 @@ const registerUser = async (req: Request, res: Response): Promise<any> => {
 
 const updateUserDetails = async (req: Request, res: Response): Promise<any> => {
   try {
-    const { id, password, status } = req.body;
+    const { id, password, educationLanguage, status } = req.body;
 
     if (!id) {
       return res
@@ -121,6 +121,11 @@ const updateUserDetails = async (req: Request, res: Response): Promise<any> => {
         });
       }
       user.password = await bcrypt.hash(password, 10);
+    }
+
+    if (educationLanguage){
+      const lowerStringFormate = educationLanguage.toLowerCase().trim();
+      user.medium_of_education = lowerStringFormate;
     }
 
     user.updated_at = new Date();
