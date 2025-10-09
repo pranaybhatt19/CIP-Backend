@@ -82,6 +82,7 @@ const loginUser = async (req: Request, res: Response): Promise<any> => {
           }
         : null,
       activeStatus: userDetails.is_active,
+      mediumOfEducation: userDetails.medium_of_education
     };
     const token: string = createToken(tokenPayload);
 

@@ -5,7 +5,7 @@ import { User } from "../entities";
 import { calculateExperience } from "../utils/validators";
 
 export interface AuthRequest extends Request {
-  user?: { sub: string; email: string; designation: string, experience: number | any, reportingPerson: any | null, activeStatus: boolean };
+  user?: { sub: string; email: string; designation: string, experience: number | any, reportingPerson: any | null, activeStatus: boolean, mediumOfEducation: string | null };
 }
 
 export const authenticate = async (
@@ -52,6 +52,12 @@ export const authenticate = async (
         .json({ message: "Authorization failed, User inactive" });
     }
 
+    if (!dbUser.medium_of_education || dbUser.medium_of_education == null){
+      return res
+        .status(409)
+        .json({ message: "Conflict with the resource's current state, Add medium of education" });
+    }
+
     const experience = calculateExperience(dbUser.experience);
 
     req.user = {
@@ -67,7 +73,8 @@ export const authenticate = async (
           name: dbUser?.designation.name
         }
       } as any : null,
-      activeStatus: dbUser.is_active
+      activeStatus: dbUser.is_active,
+      mediumOfEducation: dbUser.medium_of_education
     };
 
     next();
