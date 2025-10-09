@@ -5,7 +5,15 @@ import { User } from "../entities";
 import { calculateExperience } from "../utils/validators";
 
 export interface AuthRequest extends Request {
-  user?: { sub: string; email: string; designation: string, experience: number | any, reportingPerson: any | null, activeStatus: boolean, mediumOfEducation: string | null };
+  user?: {
+    sub: string;
+    email: string;
+    designation: string;
+    experience: number | any;
+    reportingPerson: any | null;
+    activeStatus: boolean;
+    mediumOfEducation: string | null;
+  };
 }
 
 export const authenticate = async (
@@ -33,12 +41,13 @@ export const authenticate = async (
     }
     const userRepository = AppDataSource.getRepository(User);
 
-    const dbUser = await userRepository.createQueryBuilder('user')
-    .leftJoinAndSelect("user.designation", "designations")
-    .leftJoinAndSelect('user.reporting_person', 'reportingPerson')
-    .leftJoinAndSelect('reportingPerson.designation', 'roDesignation')
-    .where("user.id = :id", { id: userId })
-    .getOne();
+    const dbUser = await userRepository
+      .createQueryBuilder("user")
+      .leftJoinAndSelect("user.designation", "designations")
+      .leftJoinAndSelect("user.reporting_person", "reportingPerson")
+      .leftJoinAndSelect("reportingPerson.designation", "roDesignation")
+      .where("user.id = :id", { id: userId })
+      .getOne();
 
     if (!dbUser) {
       return res
@@ -51,11 +60,13 @@ export const authenticate = async (
         .status(401)
         .json({ message: "Authorization failed, User inactive" });
     }
-
-    if (!dbUser.medium_of_education || dbUser.medium_of_education == null){
-      return res
-        .status(409)
-        .json({ message: "Conflict with the resource's current state, Add medium of education" });
+    const requestPath = req.path;
+    const updateUserPath = process.env.UPDATE_USER_API_PATH?.toString();
+    if (!dbUser.medium_of_education && updateUserPath !== requestPath) {
+      return res.status(409).json({
+        message:
+          "Conflict with the resource's current state, Add medium of education",
+      });
     }
 
     const experience = calculateExperience(dbUser.experience);
@@ -65,16 +76,18 @@ export const authenticate = async (
       email: dbUser.email,
       designation: dbUser.designation.name,
       experience: experience,
-      reportingPerson: dbUser?.reporting_person ? {
-        sub: dbUser?.reporting_person?.id,
-        name: dbUser?.reporting_person?.full_name,
-        designation: {
-          id: dbUser?.designation.id,
-          name: dbUser?.designation.name
-        }
-      } as any : null,
+      reportingPerson: dbUser?.reporting_person
+        ? ({
+            sub: dbUser?.reporting_person?.id,
+            name: dbUser?.reporting_person?.full_name,
+            designation: {
+              id: dbUser?.designation.id,
+              name: dbUser?.designation.name,
+            },
+          } as any)
+        : null,
       activeStatus: dbUser.is_active,
-      mediumOfEducation: dbUser.medium_of_education
+      mediumOfEducation: dbUser.medium_of_education,
     };
 
     next();
