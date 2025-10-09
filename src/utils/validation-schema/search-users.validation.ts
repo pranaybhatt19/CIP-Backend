@@ -27,13 +27,13 @@ const totalAttemptsSchema = Joi.object({
 
 const lastCommunicationDateSchema = Joi.object({
   exactDate: Joi.date().iso().allow(null).optional().messages({
-    "date.base": `"exactDate" must be a valid date`,
-    "date.format": `"exactDate" must be in ISO format`,
+    "date.base": `"Exact Date" must be a valid date`,
+    "date.format": `"Exact Date" must be in ISO format`,
   }),
 
   fromDate: Joi.date().iso().allow(null).optional().messages({
-    "date.base": `"fromDate" must be a valid date`,
-    "date.format": `"fromDate" must be in ISO format`,
+    "date.base": `"From Date" must be a valid date`,
+    "date.format": `"From Date" must be in ISO format`,
   }),
 
   toDate: Joi.date()
@@ -46,9 +46,9 @@ const lastCommunicationDateSchema = Joi.object({
       otherwise: Joi.date().allow(null),
     })
     .messages({
-      "date.base": `"toDate" must be a valid date`,
-      "date.greater": `"toDate" must be greater than "fromDate"`,
-      "date.format": `"toDate" must be in ISO format`,
+      "date.base": `"To Date" must be a valid date`,
+      "date.greater": `"To Date" must be greater than "fromDate"`,
+      "date.format": `"To Date" must be in ISO format`,
     }),
 });
 
