@@ -592,8 +592,24 @@ const getUserCompleteDetails = async (req: Request, res: Response): Promise<any>
     }
 
     const userData: User | null = await userRepository
-      .createQueryBuilder()
+      .createQueryBuilder("user")
+      .leftJoinAndSelect("user.designation", "designations")
+      .leftJoinAndSelect('user.reporting_person', 'reportingPerson')
+      .leftJoinAndSelect('reportingPerson.designation', 'roDesignation')
       .where("id = :userId", { userId: id })
+      .select([
+        'user.full_name',
+        'user.first_name',
+        'user.middle_name',
+        'user.last_name',
+        'user.email',
+        'user.experience',
+        'user.is_active',
+        'user.medium_of_education',
+        'designations.name',
+        'reportingPerson.name',
+        'roDesignation.name',
+      ])
       .getOne();
 
     if(!userData){
