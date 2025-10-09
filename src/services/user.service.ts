@@ -591,26 +591,28 @@ const getUserCompleteDetails = async (req: Request, res: Response): Promise<any>
       return res.status(400).json({ message: "User Id is required" });
     }
 
-    const userData: User | null = await userRepository
-      .createQueryBuilder("user")
-      .leftJoinAndSelect("user.designation", "designations")
-      .leftJoinAndSelect('user.reporting_person', 'reportingPerson')
-      .leftJoinAndSelect('reportingPerson.designation', 'roDesignation')
-      .where("id = :userId", { userId: id })
-      .select([
-        'user.full_name',
-        'user.first_name',
-        'user.middle_name',
-        'user.last_name',
-        'user.email',
-        'user.experience',
-        'user.is_active',
-        'user.medium_of_education',
-        'designations.name',
-        'reportingPerson.name',
-        'roDesignation.name',
-      ])
-      .getOne();
+    const userData: User | undefined = await userRepository
+    .createQueryBuilder("user")
+    .leftJoin("user.designation", "userDesignation")
+    .leftJoin("user.reporting_person", "reportingPerson")
+    .leftJoin("reportingPerson.designation", "roDesignation")
+    .select([
+      "user.id AS user_id",
+      "user.full_name AS user_full_name",
+      "user.first_name AS user_first_name",
+      "user.middle_name AS user_middle_name",
+      "user.last_name AS user_last_name",
+      "user.email AS user_email",
+      "user.experience AS user_experience",
+      "user.is_active AS user_is_active",
+      "user.medium_of_education AS user_medium_of_education",
+      "userDesignation.name AS designation_name",
+      "reportingPerson.id AS reporting_person_id",
+      "reportingPerson.full_name AS reporting_person_full_name",
+      "roDesignation.name AS reporting_person_designation_name"
+    ])
+    .where("user.id = :userId", { userId: id })
+    .getRawOne();
 
     if(!userData){
       return res.status(400).json({
