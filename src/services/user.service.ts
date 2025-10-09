@@ -583,6 +583,35 @@ const getDesignationsList = async (
   }
 };
 
+const getUserCompleteDetails = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({ message: "User Id is required" });
+    }
+
+    const userData: User | null = await userRepository
+      .createQueryBuilder()
+      .where("id = :userId", { userId: id })
+      .getOne();
+
+    if(!userData){
+      return res.status(400).json({
+        message: "User details now found for this user id, Please try again.",
+        payload: null
+      })
+    }
+
+    return res.status(200).json({
+      message: "User details fetched successfully",
+      payload: userData
+    })
+  } catch(err: any){
+    return res.status(500).json({ message: err.message || "Something went wrong while fetching user data" });
+  }
+}
+
 export {
   registerUser,
   searchUsersFilter,
@@ -592,4 +621,5 @@ export {
   updateUserDetails,
   deletePracticeResult,
   getPracticeDetailsByUserId,
+  getUserCompleteDetails
 };

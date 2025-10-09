@@ -5,7 +5,7 @@ import { User } from "../entities";
 import { calculateExperience } from "../utils/validators";
 
 export interface AuthRequest extends Request {
-  user?: { sub: string; email: string; designation: string, experience: number | any, reportingPerson: any | null, activeStatus: boolean, mediumOfEducation: string | null };
+  user?: { sub: string, email: string, name: string, designation: string, activeStatus: boolean, mediumOfEducation: string | null };
 }
 
 export const authenticate = async (
@@ -63,18 +63,19 @@ export const authenticate = async (
     req.user = {
       sub: dbUser.id as any,
       email: dbUser.email,
+      name: dbUser.full_name,
       designation: dbUser.designation.name,
-      experience: experience,
-      reportingPerson: dbUser?.reporting_person ? {
-        sub: dbUser?.reporting_person?.id,
-        name: dbUser?.reporting_person?.full_name,
-        designation: {
-          id: dbUser?.designation.id,
-          name: dbUser?.designation.name
-        }
-      } as any : null,
       activeStatus: dbUser.is_active,
       mediumOfEducation: dbUser.medium_of_education
+      // experience: experience,
+      // reportingPerson: dbUser?.reporting_person ? {
+      //   sub: dbUser?.reporting_person?.id,
+      //   name: dbUser?.reporting_person?.full_name,
+      //   designation: {
+      //     id: dbUser?.designation.id,
+      //     name: dbUser?.designation.name
+      //   }
+      // } as any : null,
     };
 
     next();
