@@ -30,7 +30,8 @@ RETURNS TABLE(
     experience_years numeric,
     attempts_count bigint,
     medium_of_education text,
-    last_communication_date timestamp
+    last_communication_date timestamp,
+    link text
 )
 LANGUAGE plpgsql
 AS $$
@@ -87,7 +88,14 @@ BEGIN
             fh.medium_of_education::text,
             fh.experience_years,
             COUNT(cm.user_id)::bigint AS attempts_count,
-            MAX(cm.date)::timestamp AS last_communication_date
+            MAX(cm.date)::timestamp AS last_communication_date,
+            (
+              SELECT c2.link
+              FROM cip_schema.communications c2
+              WHERE c2.user_id = fh.id AND c2.is_deleted = false
+              ORDER BY c2.date DESC NULLS LAST
+              LIMIT 1
+            )::text AS link
         FROM forward_hierarchy fh
         LEFT JOIN cip_schema.communications cm 
             ON cm.user_id = fh.id 
@@ -184,7 +192,14 @@ BEGIN
             rh.medium_of_education::text,
             rh.experience_years,
             COUNT(cm.user_id)::bigint AS attempts_count,
-            MAX(cm.date)::timestamp AS last_communication_date
+            MAX(cm.date)::timestamp AS last_communication_date,
+            (
+              SELECT c2.link
+              FROM cip_schema.communications c2
+              WHERE c2.user_id = rh.id AND c2.is_deleted = false
+              ORDER BY c2.date DESC NULLS LAST
+              LIMIT 1
+            )::text AS link
         FROM reverse_hierarchy rh
         LEFT JOIN cip_schema.communications cm 
             ON cm.user_id = rh.id 
