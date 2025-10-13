@@ -85,7 +85,19 @@ export const searchUsersSchema = {
       }),
 
     experience: experienceFilterSchema.optional(),
-
+    education_medium: Joi.array()
+      .items(
+        Joi.string().trim().min(1).messages({
+          "string.base": "Each education medium must be a string",
+          "string.empty": "Education medium cannot be empty",
+        })
+      )
+      .min(1)
+      .optional()
+      .messages({
+        "array.base": "Education medium must be an array of strings",
+        "array.min": "Please select at least one education medium",
+      }),
     reporting_persons_ids: Joi.array()
       .items(
         Joi.number().integer().messages({

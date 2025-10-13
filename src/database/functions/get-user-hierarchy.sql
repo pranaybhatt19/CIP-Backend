@@ -1,5 +1,5 @@
 DROP FUNCTION IF EXISTS cip_schema.get_user_hierarchy(
-    integer, text, text[], integer[], integer[], text, numeric, text, numeric, timestamp, timestamp, timestamp, integer, integer, text, text
+    integer, text, integer[], integer[], text, numeric, text, numeric, timestamp, timestamp, timestamp, integer, integer, text, text
 );
 
 CREATE FUNCTION cip_schema.get_user_hierarchy(
@@ -45,7 +45,7 @@ BEGIN
             rp.full_name::text AS reporting_person_name,
             u.designation_id,
             d.name::text AS designation_name,
-            u.medium_of_education,
+            u.medium_of_education::text,
             u.is_active,
             (DATE_PART('year', AGE(NOW(), u.experience)) 
                 + DATE_PART('month', AGE(NOW(), u.experience)) / 100)::numeric AS experience_years
@@ -64,7 +64,7 @@ BEGIN
             rp.full_name::text AS reporting_person_name,
             u.designation_id,
             d.name::text AS designation_name,
-            u.medium_of_education,
+            u.medium_of_education::text,
             u.is_active,
             (DATE_PART('year', AGE(NOW(), u.experience)) 
                 + DATE_PART('month', AGE(NOW(), u.experience)) / 100)::numeric AS experience_years
@@ -126,7 +126,7 @@ BEGIN
         json_build_object('id', fh.designation_id, 'name', fh.designation_name) AS designation,
         fh.experience_years,
         fh.attempts_count,
-        fh.medium_of_education,
+        fh.medium_of_education::text,
         fh.last_communication_date
     FROM filtered_hierarchy fh
     ORDER BY
@@ -142,8 +142,8 @@ BEGIN
         CASE WHEN order_field = 'attempts_count' AND order_direction = 'DESC' THEN fh.attempts_count END DESC,
         CASE WHEN order_field = 'last_communication_date' AND order_direction = 'ASC' THEN fh.last_communication_date END ASC,
         CASE WHEN order_field = 'last_communication_date' AND order_direction = 'DESC' THEN fh.last_communication_date END DESC,
-        CASE WHEN order_field = 'medium_of_education' AND order_direction = 'ASC' THEN fh.medium_of_education END ASC,
-        CASE WHEN order_field = 'medium_of_education' AND order_direction = 'DESC' THEN fh.medium_of_education END DESC,
+        CASE WHEN order_field = 'education_medium' AND order_direction = 'ASC' THEN fh.medium_of_education END ASC,
+        CASE WHEN order_field = 'education_medium' AND order_direction = 'DESC' THEN fh.medium_of_education END DESC
     LIMIT limit_val
     OFFSET offset_val;
 END;
