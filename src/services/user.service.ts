@@ -123,7 +123,7 @@ const updateUserDetails = async (req: Request, res: Response): Promise<any> => {
       user.password = await bcrypt.hash(password, 10);
     }
 
-    if (educationLanguage){
+    if (educationLanguage) {
       const lowerStringFormate = educationLanguage.toLowerCase().trim();
       user.medium_of_education = lowerStringFormate;
     }
@@ -588,47 +588,80 @@ const getUserCompleteDetails = async (req: Request, res: Response): Promise<any>
     const { id } = req.params;
 
     if (!id) {
-      return res.status(400).json({ message: "User Id is required" });
+      return res.status(400).json({ message: "User ID is required" });
     }
 
-    const userData: User | undefined = await userRepository
-    .createQueryBuilder("user")
-    .leftJoin("user.designation", "userDesignation")
-    .leftJoin("user.reporting_person", "reportingPerson")
-    .leftJoin("reportingPerson.designation", "roDesignation")
-    .select([
-      "user.id AS user_id",
-      "user.full_name AS user_full_name",
-      "user.first_name AS user_first_name",
-      "user.middle_name AS user_middle_name",
-      "user.last_name AS user_last_name",
-      "user.email AS user_email",
-      "user.experience AS user_experience",
-      "user.is_active AS user_is_active",
-      "user.medium_of_education AS user_medium_of_education",
-      "userDesignation.name AS designation_name",
-      "reportingPerson.id AS reporting_person_id",
-      "reportingPerson.full_name AS reporting_person_full_name",
-      "roDesignation.name AS reporting_person_designation_name"
-    ])
-    .where("user.id = :userId", { userId: id })
-    .getRawOne();
+    const rawData = await userRepository
+      .createQueryBuilder("u")
+      .leftJoin("u.designation", "userDesignation")
+      .leftJoin("u.reporting_person", "reportingPerson")
+      .leftJoin("reportingPerson.designation", "roDesignation")
+      .select([
+        "u.id AS user_id",
+        "u.full_name AS user_full_name",
+        "u.first_name AS user_first_name",
+        "u.middle_name AS user_middle_name",
+        "u.last_name AS user_last_name",
+        "u.email AS user_email",
+        "u.experience AS user_experience",
+        "u.is_active AS user_is_active",
+        "u.medium_of_education AS user_medium_of_education",
+        "userDesignation.name AS user_designation_name",
+        "reportingPerson.id AS reporting_person_id",
+        "reportingPerson.full_name AS reporting_person_full_name",
+        "roDesignation.name AS reporting_person_designation_name",
+        `(DATE_PART('year', AGE(NOW(), u.experience)) 
+          + DATE_PART('month', AGE(NOW(), u.experience)) / 100)::numeric AS experience_years`,
+      ])
+      .where("u.id = :userId", { userId: id })
+      .getRawOne();
 
-    if(!userData){
-      return res.status(400).json({
-        message: "User details now found for this user id, Please try again.",
-        payload: null
-      })
+    if (!rawData) {
+      return res.status(404).json({
+        message: "User details not found for this user ID. Please try again.",
+        payload: null,
+      });
     }
+
+    const formattedData = {
+      id: rawData.user_id,
+      full_name: rawData.user_full_name,
+      first_name: rawData.user_first_name,
+      middle_name: rawData.user_middle_name,
+      last_name: rawData.user_last_name,
+      email: rawData.user_email,
+      experience_start_date: rawData.user_experience,
+      experience_years: Number(rawData.experience_years), 
+      is_active: rawData.user_is_active,
+      medium_of_education: String(rawData.user_medium_of_education).charAt(0).toUpperCase() 
+                          + String(rawData.user_medium_of_education).slice(1).toLowerCase(),
+      designation: {
+        name: rawData.user_designation_name,
+      },
+      reporting_person: rawData.reporting_person_id
+        ? {
+          id: rawData.reporting_person_id,
+          full_name: rawData.reporting_person_full_name,
+          designation: {
+            name: rawData.reporting_person_designation_name,
+          },
+        }
+        : null,
+    };
 
     return res.status(200).json({
       message: "User details fetched successfully",
-      payload: userData
-    })
-  } catch(err: any){
-    return res.status(500).json({ message: err.message || "Something went wrong while fetching user data" });
+      payload: formattedData,
+    });
+  } catch (err: any) {
+    console.error("Error in getUserCompleteDetails:", err);
+    return res.status(500).json({
+      message: err.message || "Something went wrong while fetching user data",
+    });
   }
-}
+};
+
+
 
 export {
   registerUser,
