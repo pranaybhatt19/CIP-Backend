@@ -660,6 +660,37 @@ const getUserCompleteDetails = async (req: Request, res: Response): Promise<any>
   }
 };
 
+const getMediumDetails = async (  req: Request, res: Response): Promise<any> => {
+  try {
+    const mediumList = await userRepository
+      .createQueryBuilder('u')
+      .select('u.medium_of_education', 'medium_of_education')
+      .distinct(true)
+      .where('u.medium_of_education IS NOT NULL')
+      .getRawMany();
+
+    if(!mediumList || mediumList.length == 0){
+      return res.status(200).json({
+        data: [],
+        message: "Education medium list fetched successfully, No Data is found associated to medium"
+      });
+    }
+    
+    const educationMediumList: string[] = mediumList.map((u) => {
+      const refinedMedium = String(u.medium_of_education).trim();
+      return refinedMedium.charAt(0).toUpperCase() + refinedMedium.slice(1).trim();
+    });
+
+    return res.status(200).json({
+      data: educationMediumList,
+      message: "Education medium list fetched successfully",
+    });
+    
+  } catch (err: any){
+    console.error("Error while fetching medium:", err.message);
+    return res.status(500).json({ message: err.message || "Error while fetching medium" });
+  }
+}
 
 
 export {
@@ -671,5 +702,6 @@ export {
   updateUserDetails,
   deletePracticeResult,
   getPracticeDetailsByUserId,
-  getUserCompleteDetails
+  getUserCompleteDetails,
+  getMediumDetails,
 };

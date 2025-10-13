@@ -9,6 +9,7 @@ import {
   getReportingPersons,
   registerNewUser,
   getUsersDetails,
+  getUsersMedium,
 } from "../controllers/user.controller";
 import dtoValidation from "../middlewares/dto-validation.middleware";
 import { AddPracticeDto, UpdateUserDto } from "../dto";
@@ -21,6 +22,7 @@ const userRouter = Router();
 userRouter.get("/get-designations", getDesignations);
 userRouter.get("/get-reporting-persons", getReportingPersons);
 userRouter.get("/get-user-details/:id", getUsersDetails);
+userRouter.get("/get-user-medium", getUsersMedium);
 
 
 // POST Requests
