@@ -46,7 +46,7 @@ const deletePractice = async (req: Request, res: Response) => {
 
 const getUsersDetails = async (req: Request, res: Response) => {
   return await getUserCompleteDetails(req, res);
-}
+};
 
 const getUsersMedium = async (req: Request, res: Response) => {
   return await getMediumDetails(req, res);
@@ -62,5 +62,5 @@ export {
   getUsersPracticeDetails,
   deletePractice,
   getUsersDetails,
-  getUsersMedium
+  getUsersMedium,
 };
