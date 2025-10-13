@@ -467,7 +467,7 @@ const buildUserHierarchy = (users: User[], currentUserId: number) => {
     userMap[user.user_id] = {
       ...rest,
       education_medium: user.medium_of_education,
-      experience: user.experience_years,
+      experience: Number(user.experience_years).toFixed(2),
       attempts: parseInt(user.attempts_count, 0),
       childrens: [],
     };
