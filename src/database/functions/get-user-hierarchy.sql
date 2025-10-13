@@ -1,10 +1,11 @@
 DROP FUNCTION IF EXISTS cip_schema.get_user_hierarchy(
-      integer, text, integer[], integer[], text, numeric, text, numeric, integer, integer, text, text
+      integer, text, text[], integer[], integer[], text, numeric, text, numeric, integer, integer, text, text
       );
 
       CREATE FUNCTION cip_schema.get_user_hierarchy(
           root_user_id integer,
           name_filter text,
+          medium_of_education text[],
           designation_ids integer[],
           reporting_person_ids integer[],
           experience_type text,
@@ -28,6 +29,7 @@ DROP FUNCTION IF EXISTS cip_schema.get_user_hierarchy(
           designation json,
           experience_years numeric,
           attempts_count bigint,
+          medium_of_education text,
           last_communication_date timestamp
       )
       LANGUAGE plpgsql
@@ -43,6 +45,7 @@ DROP FUNCTION IF EXISTS cip_schema.get_user_hierarchy(
                   rp.full_name::text AS reporting_person_name,
                   u.designation_id,
                   d.name::text AS designation_name,
+                  u.medium_of_education,
                   u.is_active,
                   (DATE_PART('year', AGE(NOW(), u.experience)) 
                       + DATE_PART('month', AGE(NOW(), u.experience)) / 100)::numeric AS experience_years
@@ -61,6 +64,7 @@ DROP FUNCTION IF EXISTS cip_schema.get_user_hierarchy(
                   rp.full_name::text AS reporting_person_name,
                   u.designation_id,
                   d.name::text AS designation_name,
+                  u.medium_of_education,
                   u.is_active,
                   (DATE_PART('year', AGE(NOW(), u.experience)) 
                       + DATE_PART('month', AGE(NOW(), u.experience)) / 100)::numeric AS experience_years
@@ -108,6 +112,7 @@ DROP FUNCTION IF EXISTS cip_schema.get_user_hierarchy(
                     OR (last_comm_from IS NOT NULL AND last_comm_to IS NOT NULL 
                         AND uh.last_communication_date BETWEEN last_comm_from AND last_comm_to)
                   )
+                  AND (medium_of_education IS NULL OR uh.medium_of_education = ANY(medium_of_education))
                   AND uh.is_active = true 
                   AND uh.reporting_person_id IS NOT NULL
                   OR (uh.id = root_user_id AND uh.reporting_person_id IS NOT NULL)
@@ -121,6 +126,7 @@ DROP FUNCTION IF EXISTS cip_schema.get_user_hierarchy(
               json_build_object('id', fh.designation_id, 'name', fh.designation_name) AS designation,
               fh.experience_years,
               fh.attempts_count,
+              fh.medium_of_education,
               fh.last_communication_date
           FROM filtered_hierarchy fh
           ORDER BY
@@ -135,7 +141,9 @@ DROP FUNCTION IF EXISTS cip_schema.get_user_hierarchy(
               CASE WHEN order_field = 'attempts_count' AND order_direction = 'ASC' THEN fh.attempts_count END ASC,
               CASE WHEN order_field = 'attempts_count' AND order_direction = 'DESC' THEN fh.attempts_count END DESC,
               CASE WHEN order_field = 'last_communication_date' AND order_direction = 'ASC' THEN fh.last_communication_date END ASC,
-              CASE WHEN order_field = 'last_communication_date' AND order_direction = 'DESC' THEN fh.last_communication_date END DESC
+              CASE WHEN order_field = 'last_communication_date' AND order_direction = 'DESC' THEN fh.last_communication_date END DESC,
+              CASE WHEN order_field = 'medium_of_education' AND order_direction = 'ASC' THEN fh.medium_of_education END ASC,
+              CASE WHEN order_field = 'medium_of_education' AND order_direction = 'DESC' THEN fh.medium_of_education END DESC,
           LIMIT limit_val
           OFFSET offset_val;
       END;
