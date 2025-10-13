@@ -5,35 +5,45 @@ const experienceFilterSchema = Joi.object({
     .valid("LESS_THAN", "GREATER_THAN", "EQUALS")
     .required()
     .messages({
-      "any.required": "Score filter type is required",
-      "string.base": "Score filter type must be a string",
+      "any.required": "Experience filter type is required",
+      "string.base": "Experience filter type must be a string",
       "any.only":
-        "Score filter type must be one of: LESS_THAN, GREATER_THAN, EQUALS",
+        "Experience filter type must be one of: LESS_THAN, GREATER_THAN, or EQUALS",
     }),
   value: Joi.number().min(0).required().messages({
-    "any.required": "Score filter value is required",
-    "number.base": "Score filter value must be a number",
-    "number.min": "Score filter value must be at least 0",
+    "any.required": "Experience filter value is required",
+    "number.base": "Experience filter value must be a number",
+    "number.min": "Experience filter value must be at least 0",
   }),
 });
+
 const totalAttemptsSchema = Joi.object({
-  type: Joi.string().valid("LESS_THAN", "GREATER_THAN", "EQUALS").required(),
+  type: Joi.string()
+    .valid("LESS_THAN", "GREATER_THAN", "EQUALS")
+    .required()
+    .messages({
+      "any.required": "Attempts filter type is required",
+      "string.base": "Attempts filter type must be a string",
+      "any.only":
+        "Attempts filter type must be one of: LESS_THAN, GREATER_THAN, or EQUALS",
+    }),
   value: Joi.number().integer().min(1).required().messages({
-    "any.required": "total attempts filter value is required",
-    "number.base": "total attempts filter value must be a number",
-    "number.min": "total attempts filter value must be at least 0",
+    "any.required": "Attempts filter value is required",
+    "number.base": "Attempts filter value must be a number",
+    "number.min": "Attempts filter value must be at least 1",
+    "number.integer": "Attempts filter value must be an integer",
   }),
 });
 
 const lastCommunicationDateSchema = Joi.object({
   exactDate: Joi.date().iso().allow(null).optional().messages({
-    "date.base": `"Exact Date" must be a valid date`,
-    "date.format": `"Exact Date" must be in ISO format`,
+    "date.base": "Exact Date must be a valid date",
+    "date.format": "Exact Date must be in ISO format (YYYY-MM-DD)",
   }),
 
   fromDate: Joi.date().iso().allow(null).optional().messages({
-    "date.base": `"From Date" must be a valid date`,
-    "date.format": `"From Date" must be in ISO format`,
+    "date.base": "From Date must be a valid date",
+    "date.format": "From Date must be in ISO format (YYYY-MM-DD)",
   }),
 
   toDate: Joi.date()
@@ -46,34 +56,56 @@ const lastCommunicationDateSchema = Joi.object({
       otherwise: Joi.date().allow(null),
     })
     .messages({
-      "date.base": `"To Date" must be a valid date`,
-      "date.greater": `"To Date" must be greater than "fromDate"`,
-      "date.format": `"To Date" must be in ISO format`,
+      "date.base": "To Date must be a valid date",
+      "date.greater": "To Date must be greater than From Date",
+      "date.format": "To Date must be in ISO format (YYYY-MM-DD)",
     }),
 });
 
 export const searchUsersSchema = {
   [Segments.BODY]: Joi.object({
-    full_name: Joi.string().trim().min(2).max(100).optional(),
+    full_name: Joi.string().trim().min(2).max(100).optional().messages({
+      "string.base": "Full name must be a string",
+      "string.min": "Full name must have at least 2 characters",
+      "string.max": "Full name cannot exceed 100 characters",
+    }),
 
     designation_ids: Joi.array()
-      .items(Joi.number().integer())
+      .items(
+        Joi.number().integer().messages({
+          "number.base": "Each designation ID must be a number",
+          "number.integer": "Designation ID must be an integer",
+        })
+      )
       .min(1)
-      .optional(),
+      .optional()
+      .messages({
+        "array.base": "Designations must be an array of IDs",
+        "array.min": "Please select at least one designation",
+      }),
 
     experience: experienceFilterSchema.optional(),
 
     reporting_persons_ids: Joi.array()
-      .items(Joi.number().integer())
+      .items(
+        Joi.number().integer().messages({
+          "number.base": "Each reporting person ID must be a number",
+          "number.integer": "Reporting person ID must be an integer",
+        })
+      )
       .min(1)
-      .optional(),
+      .optional()
+      .messages({
+        "array.base": "Reporting persons must be an array of IDs",
+        "array.min": "Please select at least one reporting person",
+      }),
 
     attempts: totalAttemptsSchema.optional(),
 
-    last_communication_date: lastCommunicationDateSchema,
+    last_communication_date: lastCommunicationDateSchema.optional(),
 
     isTreeView: Joi.boolean().optional().messages({
-      "boolean.base": "isTreeView must be a boolean value (true or false)",
+      "boolean.base": "Tree view flag must be true or false",
     }),
 
     limit: Joi.number().integer().positive().optional().messages({
@@ -106,7 +138,7 @@ export const searchUsersSchema = {
       )
       .optional()
       .messages({
-        "array.base": "Order must be an array of [field, order_type]",
+        "array.base": "Order must be an array of [field, direction]",
       }),
   }),
 };
