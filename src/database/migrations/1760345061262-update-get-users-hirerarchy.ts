@@ -1,9 +1,9 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class UpdateGetUsersHirerarchy1760345061261
+export class UpdateGetUsersHirerarchy1760345061262
   implements MigrationInterface
 {
-  name = "UpdateGetUsersHirerarchy1760345061261";
+  name = "UpdateGetUsersHirerarchy1760345061262";
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
@@ -12,22 +12,22 @@ export class UpdateGetUsersHirerarchy1760345061261
         );
 
         CREATE FUNCTION cip_schema.get_user_hierarchy(
-            root_user_id integer,
-            name_filter text,
-            education_medium text[],
-            designation_ids integer[],
-            reporting_person_ids integer[],
-            experience_type text,
-            experience_value numeric,
-            attempts_type text,
-            attempts_value numeric,
-            last_comm_exact timestamp,
-            last_comm_from timestamp,
-            last_comm_to timestamp,
-            limit_val integer,
-            offset_val integer,
-            order_field text,
-            order_direction text
+        root_user_id integer,
+        name_filter text,
+        education_medium text[],
+        designation_ids integer[],
+        reporting_person_ids integer[],
+        experience_type text,
+        experience_value numeric,
+        attempts_type text,
+        attempts_value numeric,
+        last_comm_exact timestamp,
+        last_comm_from timestamp,
+        last_comm_to timestamp,
+        limit_val integer,
+        offset_val integer,
+        order_field text,
+        order_direction text
         )
         RETURNS TABLE(
             total_count bigint,
@@ -139,20 +139,20 @@ export class UpdateGetUsersHirerarchy1760345061261
                 fh.last_communication_date
             FROM filtered_hierarchy fh
             ORDER BY
-                CASE WHEN order_field = 'full_name' AND order_direction = 'ASC' THEN fh.full_name END ASC,
-                CASE WHEN order_field = 'full_name' AND order_direction = 'DESC' THEN fh.full_name END DESC,
-                CASE WHEN order_field = 'experience_years' AND order_direction = 'ASC' THEN fh.experience_years END ASC,
-                CASE WHEN order_field = 'experience_years' AND order_direction = 'DESC' THEN fh.experience_years END DESC,
-                CASE WHEN order_field = 'designation_name' AND order_direction = 'ASC' THEN fh.designation_name END ASC,
-                CASE WHEN order_field = 'designation_name' AND order_direction = 'DESC' THEN fh.designation_name END DESC,
-                CASE WHEN order_field = 'reporting_person_name' AND order_direction = 'ASC' THEN fh.reporting_person_name END ASC,
-                CASE WHEN order_field = 'reporting_person_name' AND order_direction = 'DESC' THEN fh.reporting_person_name END DESC,
-                CASE WHEN order_field = 'attempts_count' AND order_direction = 'ASC' THEN fh.attempts_count END ASC,
-                CASE WHEN order_field = 'attempts_count' AND order_direction = 'DESC' THEN fh.attempts_count END DESC,
-                CASE WHEN order_field = 'last_communication_date' AND order_direction = 'ASC' THEN fh.last_communication_date END ASC,
-                CASE WHEN order_field = 'last_communication_date' AND order_direction = 'DESC' THEN fh.last_communication_date END DESC,
-                CASE WHEN order_field = 'education_medium' AND order_direction = 'ASC' THEN fh.medium_of_education END ASC,
-                CASE WHEN order_field = 'education_medium' AND order_direction = 'DESC' THEN fh.medium_of_education END DESC
+                CASE WHEN order_field = 'full_name' AND order_direction = 'ASC' THEN fh.full_name END ASC NULLS LAST,
+                CASE WHEN order_field = 'full_name' AND order_direction = 'DESC' THEN fh.full_name END DESC NULLS LAST,
+                CASE WHEN order_field = 'experience_years' AND order_direction = 'ASC' THEN fh.experience_years END ASC NULLS LAST,
+                CASE WHEN order_field = 'experience_years' AND order_direction = 'DESC' THEN fh.experience_years END DESC NULLS LAST,
+                CASE WHEN order_field = 'designation_name' AND order_direction = 'ASC' THEN fh.designation_name END ASC NULLS LAST,
+                CASE WHEN order_field = 'designation_name' AND order_direction = 'DESC' THEN fh.designation_name END DESC NULLS LAST,
+                CASE WHEN order_field = 'reporting_person_name' AND order_direction = 'ASC' THEN fh.reporting_person_name END ASC NULLS LAST,
+                CASE WHEN order_field = 'reporting_person_name' AND order_direction = 'DESC' THEN fh.reporting_person_name END DESC NULLS LAST,
+                CASE WHEN order_field = 'attempts_count' AND order_direction = 'ASC' THEN fh.attempts_count END ASC NULLS LAST,
+                CASE WHEN order_field = 'attempts_count' AND order_direction = 'DESC' THEN fh.attempts_count END DESC NULLS LAST,
+                CASE WHEN order_field = 'last_communication_date' AND order_direction = 'ASC' THEN fh.last_communication_date END ASC NULLS LAST,
+                CASE WHEN order_field = 'last_communication_date' AND order_direction = 'DESC' THEN fh.last_communication_date END DESC NULLS LAST,
+                CASE WHEN order_field = 'education_medium' AND order_direction = 'ASC' THEN fh.medium_of_education END ASC NULLS LAST,
+                CASE WHEN order_field = 'education_medium' AND order_direction = 'DESC' THEN fh.medium_of_education END DESC NULLS LAST
             LIMIT limit_val
             OFFSET offset_val;
         END;
