@@ -466,6 +466,7 @@ const buildUserHierarchy = (users: User[], currentUserId: number) => {
 
     userMap[user.user_id] = {
       ...rest,
+      education_medium: user.medium_of_education,
       experience: user.experience_years,
       attempts: parseInt(user.attempts_count, 0),
       childrens: [],
@@ -544,16 +545,11 @@ const searchUsersFilter = async (
     const rows = await AppDataSource.manager.query(sql, values);
     if (!isTreeView) {
       const totalCount = rows.length > 0 ? parseInt(rows[0].total_count, 0) : 0;
-      const data = rows.map((r: any) => ({
-        user_id: r.user_id,
-        full_name: r.full_name,
-        email: r.email,
-        reporting_person: r.reporting_person,
-        designation: r.designation,
-        experience: r.experience_years,
-        education_medium: r.medium_of_education,
-        attempts: parseInt(r.attempts_count, 0),
-        last_communication_date: r.last_communication_date,
+      const data = rows.map((user: any) => ({
+        ...user,
+        experience: user.experience_years,
+        education_medium: user.medium_of_education,
+        attempts: parseInt(user.attempts_count, 0),
       }));
       return res.status(200).json({
         data: { totalCount, data },
@@ -695,38 +691,41 @@ const getUserCompleteDetails = async (
   }
 };
 
-const getMediumDetails = async (  req: Request, res: Response): Promise<any> => {
+const getMediumDetails = async (req: Request, res: Response): Promise<any> => {
   try {
     const mediumList = await userRepository
-      .createQueryBuilder('u')
-      .select('u.medium_of_education', 'medium_of_education')
+      .createQueryBuilder("u")
+      .select("u.medium_of_education", "medium_of_education")
       .distinct(true)
-      .where('u.medium_of_education IS NOT NULL')
+      .where("u.medium_of_education IS NOT NULL")
       .getRawMany();
 
-    if(!mediumList || mediumList.length == 0){
+    if (!mediumList || mediumList.length == 0) {
       return res.status(200).json({
         data: [],
-        message: "Education medium list fetched successfully, No Data is found associated to medium"
+        message:
+          "Education medium list fetched successfully, No Data is found associated to medium",
       });
     }
-    
+
     const educationMediumList: string[] = mediumList.map((u) => {
       const refinedMedium = String(u.medium_of_education).trim();
-      return refinedMedium.charAt(0).toUpperCase() + refinedMedium.slice(1).trim();
+      return (
+        refinedMedium.charAt(0).toUpperCase() + refinedMedium.slice(1).trim()
+      );
     });
 
     return res.status(200).json({
       data: educationMediumList,
       message: "Education medium list fetched successfully",
     });
-    
-  } catch (err: any){
+  } catch (err: any) {
     console.error("Error while fetching medium:", err.message);
-    return res.status(500).json({ message: err.message || "Error while fetching medium" });
+    return res
+      .status(500)
+      .json({ message: err.message || "Error while fetching medium" });
   }
-}
-
+};
 
 export {
   registerUser,

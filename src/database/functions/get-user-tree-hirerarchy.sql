@@ -230,24 +230,25 @@ BEGIN
         ch.experience_years,
         ch.attempts_count,
         ch.medium_of_education::text,
-        ch.last_communication_date
+        ch.last_communication_date,
+        ch.link
     FROM combined_hierarchy ch
     CROSS JOIN total t
     ORDER BY
-        CASE WHEN order_field = 'full_name' AND order_direction = 'ASC' THEN ch.full_name END ASC,
-        CASE WHEN order_field = 'full_name' AND order_direction = 'DESC' THEN ch.full_name END DESC,
-        CASE WHEN order_field = 'experience_years' AND order_direction = 'ASC' THEN ch.experience_years END ASC,
-        CASE WHEN order_field = 'experience_years' AND order_direction = 'DESC' THEN ch.experience_years END DESC,
-        CASE WHEN order_field = 'designation_name' AND order_direction = 'ASC' THEN ch.designation_name END ASC,
-        CASE WHEN order_field = 'designation_name' AND order_direction = 'DESC' THEN ch.designation_name END DESC,
-        CASE WHEN order_field = 'reporting_person_name' AND order_direction = 'ASC' THEN ch.reporting_person_name END ASC,
-        CASE WHEN order_field = 'reporting_person_name' AND order_direction = 'DESC' THEN ch.reporting_person_name END DESC,
-        CASE WHEN order_field = 'attempts_count' AND order_direction = 'ASC' THEN ch.attempts_count END ASC,
-        CASE WHEN order_field = 'attempts_count' AND order_direction = 'DESC' THEN ch.attempts_count END DESC,
-        CASE WHEN order_field = 'last_communication_date' AND order_direction = 'ASC' THEN ch.last_communication_date END ASC,
-        CASE WHEN order_field = 'last_communication_date' AND order_direction = 'DESC' THEN ch.last_communication_date END DESC,
-        CASE WHEN order_field = 'education_medium' AND order_direction = 'ASC' THEN ch.medium_of_education END ASC,
-        CASE WHEN order_field = 'education_medium' AND order_direction = 'DESC' THEN ch.medium_of_education END DESC
+        CASE WHEN order_field = 'full_name' AND order_direction = 'ASC' THEN ch.full_name END ASC NULLS LAST,
+        CASE WHEN order_field = 'full_name' AND order_direction = 'DESC' THEN ch.full_name END DESC NULLS LAST,
+        CASE WHEN order_field = 'experience_years' AND order_direction = 'ASC' THEN ch.experience_years END ASC NULLS LAST,
+        CASE WHEN order_field = 'experience_years' AND order_direction = 'DESC' THEN ch.experience_years END DESC NULLS LAST,
+        CASE WHEN order_field = 'designation_name' AND order_direction = 'ASC' THEN ch.designation_name END ASC NULLS LAST,
+        CASE WHEN order_field = 'designation_name' AND order_direction = 'DESC' THEN ch.designation_name END DESC NULLS LAST,
+        CASE WHEN order_field = 'reporting_person_name' AND order_direction = 'ASC' THEN ch.reporting_person_name END ASC NULLS LAST,
+        CASE WHEN order_field = 'reporting_person_name' AND order_direction = 'DESC' THEN ch.reporting_person_name END DESC NULLS LAST,
+        CASE WHEN order_field = 'attempts_count' AND order_direction = 'ASC' THEN ch.attempts_count END ASC NULLS LAST,
+        CASE WHEN order_field = 'attempts_count' AND order_direction = 'DESC' THEN ch.attempts_count END DESC NULLS LAST,
+        CASE WHEN order_field = 'last_communication_date' AND order_direction = 'ASC' THEN ch.last_communication_date END ASC NULLS LAST,
+        CASE WHEN order_field = 'last_communication_date' AND order_direction = 'DESC' THEN ch.last_communication_date END DESC NULLS LAST,
+        CASE WHEN order_field = 'education_medium' AND order_direction = 'ASC' THEN ch.medium_of_education END ASC NULLS LAST,
+        CASE WHEN order_field = 'education_medium' AND order_direction = 'DESC' THEN ch.medium_of_education END DESC NULLS LAST
     LIMIT limit_val
     OFFSET offset_val;
 END;

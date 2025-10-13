@@ -12,22 +12,22 @@ export class UpdateGetUsersTreeHirerarchy1760345082518
         );
 
         CREATE FUNCTION cip_schema.get_user_tree_hierarchy(
-            root_user_id integer,
-            name_filter text,
-            education_medium text[],
-            designation_ids integer[],
-            reporting_person_ids integer[],
-            experience_type text,
-            experience_value numeric,
-            attempts_type text,
-            attempts_value numeric,
-            last_comm_exact timestamp,
-            last_comm_from timestamp,
-            last_comm_to timestamp,
-            limit_val integer,
-            offset_val integer,
-            order_field text,
-            order_direction text
+        root_user_id integer,
+        name_filter text,
+        education_medium text[],
+        designation_ids integer[],
+        reporting_person_ids integer[],
+        experience_type text,
+        experience_value numeric,
+        attempts_type text,
+        attempts_value numeric,
+        last_comm_exact timestamp,
+        last_comm_from timestamp,
+        last_comm_to timestamp,
+        limit_val integer,
+        offset_val integer,
+        order_field text,
+        order_direction text
         )
         RETURNS TABLE(
             total_count bigint,
@@ -39,7 +39,8 @@ export class UpdateGetUsersTreeHirerarchy1760345082518
             experience_years numeric,
             attempts_count bigint,
             medium_of_education text,
-            last_communication_date timestamp
+            last_communication_date timestamp,
+            link text
         )
         LANGUAGE plpgsql
         AS $$
@@ -96,7 +97,14 @@ export class UpdateGetUsersTreeHirerarchy1760345082518
                     fh.medium_of_education::text,
                     fh.experience_years,
                     COUNT(cm.user_id)::bigint AS attempts_count,
-                    MAX(cm.date)::timestamp AS last_communication_date
+                    MAX(cm.date)::timestamp AS last_communication_date,
+                    (
+                    SELECT c2.link
+                    FROM cip_schema.communications c2
+                    WHERE c2.user_id = fh.id AND c2.is_deleted = false
+                    ORDER BY c2.date DESC NULLS LAST
+                    LIMIT 1
+                    )::text AS link
                 FROM forward_hierarchy fh
                 LEFT JOIN cip_schema.communications cm 
                     ON cm.user_id = fh.id 
@@ -193,7 +201,14 @@ export class UpdateGetUsersTreeHirerarchy1760345082518
                     rh.medium_of_education::text,
                     rh.experience_years,
                     COUNT(cm.user_id)::bigint AS attempts_count,
-                    MAX(cm.date)::timestamp AS last_communication_date
+                    MAX(cm.date)::timestamp AS last_communication_date,
+                    (
+                    SELECT c2.link
+                    FROM cip_schema.communications c2
+                    WHERE c2.user_id = rh.id AND c2.is_deleted = false
+                    ORDER BY c2.date DESC NULLS LAST
+                    LIMIT 1
+                    )::text AS link
                 FROM reverse_hierarchy rh
                 LEFT JOIN cip_schema.communications cm 
                     ON cm.user_id = rh.id 
@@ -224,24 +239,25 @@ export class UpdateGetUsersTreeHirerarchy1760345082518
                 ch.experience_years,
                 ch.attempts_count,
                 ch.medium_of_education::text,
-                ch.last_communication_date
+                ch.last_communication_date,
+                ch.link
             FROM combined_hierarchy ch
             CROSS JOIN total t
             ORDER BY
-                CASE WHEN order_field = 'full_name' AND order_direction = 'ASC' THEN ch.full_name END ASC,
-                CASE WHEN order_field = 'full_name' AND order_direction = 'DESC' THEN ch.full_name END DESC,
-                CASE WHEN order_field = 'experience_years' AND order_direction = 'ASC' THEN ch.experience_years END ASC,
-                CASE WHEN order_field = 'experience_years' AND order_direction = 'DESC' THEN ch.experience_years END DESC,
-                CASE WHEN order_field = 'designation_name' AND order_direction = 'ASC' THEN ch.designation_name END ASC,
-                CASE WHEN order_field = 'designation_name' AND order_direction = 'DESC' THEN ch.designation_name END DESC,
-                CASE WHEN order_field = 'reporting_person_name' AND order_direction = 'ASC' THEN ch.reporting_person_name END ASC,
-                CASE WHEN order_field = 'reporting_person_name' AND order_direction = 'DESC' THEN ch.reporting_person_name END DESC,
-                CASE WHEN order_field = 'attempts_count' AND order_direction = 'ASC' THEN ch.attempts_count END ASC,
-                CASE WHEN order_field = 'attempts_count' AND order_direction = 'DESC' THEN ch.attempts_count END DESC,
-                CASE WHEN order_field = 'last_communication_date' AND order_direction = 'ASC' THEN ch.last_communication_date END ASC,
-                CASE WHEN order_field = 'last_communication_date' AND order_direction = 'DESC' THEN ch.last_communication_date END DESC,
-                CASE WHEN order_field = 'education_medium' AND order_direction = 'ASC' THEN ch.medium_of_education END ASC,
-                CASE WHEN order_field = 'education_medium' AND order_direction = 'DESC' THEN ch.medium_of_education END DESC
+                CASE WHEN order_field = 'full_name' AND order_direction = 'ASC' THEN ch.full_name END ASC NULLS LAST,
+                CASE WHEN order_field = 'full_name' AND order_direction = 'DESC' THEN ch.full_name END DESC NULLS LAST,
+                CASE WHEN order_field = 'experience_years' AND order_direction = 'ASC' THEN ch.experience_years END ASC NULLS LAST,
+                CASE WHEN order_field = 'experience_years' AND order_direction = 'DESC' THEN ch.experience_years END DESC NULLS LAST,
+                CASE WHEN order_field = 'designation_name' AND order_direction = 'ASC' THEN ch.designation_name END ASC NULLS LAST,
+                CASE WHEN order_field = 'designation_name' AND order_direction = 'DESC' THEN ch.designation_name END DESC NULLS LAST,
+                CASE WHEN order_field = 'reporting_person_name' AND order_direction = 'ASC' THEN ch.reporting_person_name END ASC NULLS LAST,
+                CASE WHEN order_field = 'reporting_person_name' AND order_direction = 'DESC' THEN ch.reporting_person_name END DESC NULLS LAST,
+                CASE WHEN order_field = 'attempts_count' AND order_direction = 'ASC' THEN ch.attempts_count END ASC NULLS LAST,
+                CASE WHEN order_field = 'attempts_count' AND order_direction = 'DESC' THEN ch.attempts_count END DESC NULLS LAST,
+                CASE WHEN order_field = 'last_communication_date' AND order_direction = 'ASC' THEN ch.last_communication_date END ASC NULLS LAST,
+                CASE WHEN order_field = 'last_communication_date' AND order_direction = 'DESC' THEN ch.last_communication_date END DESC NULLS LAST,
+                CASE WHEN order_field = 'education_medium' AND order_direction = 'ASC' THEN ch.medium_of_education END ASC NULLS LAST,
+                CASE WHEN order_field = 'education_medium' AND order_direction = 'DESC' THEN ch.medium_of_education END DESC NULLS LAST
             LIMIT limit_val
             OFFSET offset_val;
         END;
