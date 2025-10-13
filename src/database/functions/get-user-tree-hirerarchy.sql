@@ -5,7 +5,7 @@ DROP FUNCTION IF EXISTS cip_schema.get_user_tree_hierarchy(
 CREATE FUNCTION cip_schema.get_user_tree_hierarchy(
     root_user_id integer,
     name_filter text,
-    medium_of_education text[],
+    education_medium text[],
     designation_ids integer[],
     reporting_person_ids integer[],
     experience_type text,
@@ -107,7 +107,7 @@ BEGIN
                fh.reporting_person_id IS NOT NULL OR 
                (fh.id = root_user_id AND fh.reporting_person_id IS NOT NULL)
             )
-            AND (medium_of_education IS NULL OR fh.medium_of_education = ANY(medium_of_education))
+            AND (education_medium IS NULL OR fh.medium_of_education = ANY(education_medium))
         GROUP BY 
             fh.id, fh.full_name, fh.email, fh.reporting_person_id,
             fh.reporting_person_name, fh.designation_id, fh.designation_name,

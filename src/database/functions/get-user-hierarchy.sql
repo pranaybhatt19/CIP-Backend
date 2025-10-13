@@ -5,7 +5,7 @@ DROP FUNCTION IF EXISTS cip_schema.get_user_hierarchy(
 CREATE FUNCTION cip_schema.get_user_hierarchy(
     root_user_id integer,
     name_filter text,
-    medium_of_education text[],
+    education_medium text[],
     designation_ids integer[],
     reporting_person_ids integer[],
     experience_type text,
@@ -112,7 +112,7 @@ BEGIN
             OR (last_comm_from IS NOT NULL AND last_comm_to IS NOT NULL 
                 AND uh.last_communication_date BETWEEN last_comm_from AND last_comm_to)
             )
-            AND (medium_of_education IS NULL OR uh.medium_of_education = ANY(medium_of_education))
+            AND (education_medium IS NULL OR uh.medium_of_education = ANY(education_medium))
             AND uh.is_active = true 
             AND uh.reporting_person_id IS NOT NULL
             OR (uh.id = root_user_id AND uh.reporting_person_id IS NOT NULL)
