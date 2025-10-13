@@ -470,6 +470,7 @@ const searchUsersFilter = async (
 
     const {
       full_name: nameFilter,
+      medium_of_education,
       designation_ids: rawDesignationIds,
       reporting_persons_ids: rawReportingPersonIds,
       experience,
@@ -489,6 +490,7 @@ const searchUsersFilter = async (
     const values = [
       Number(user?.sub),
       nameFilter ?? null,
+      medium_of_education,
       designationIds,
       reportingPersonIds,
       experience?.type ?? null,
@@ -518,6 +520,7 @@ const searchUsersFilter = async (
         reporting_person: r.reporting_person,
         designation: r.designation,
         experience: r.experience_years,
+        medium_of_education: r.medium_of_education,
         attempts: parseInt(r.attempts_count, 0),
         last_communication_date: r.last_communication_date,
       }));
