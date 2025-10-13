@@ -1,5 +1,5 @@
 DROP FUNCTION IF EXISTS cip_schema.get_user_tree_hierarchy(
-    integer, text, text[], integer[], integer[], text, numeric, text, numeric, timestamp,timestamp,timestamp,integer, integer, text, text
+    integer, text, integer[], integer[], text, numeric, text, numeric, timestamp,timestamp,timestamp,integer, integer, text, text
 );
 
 CREATE FUNCTION cip_schema.get_user_tree_hierarchy(
@@ -46,7 +46,7 @@ BEGIN
             rp.full_name::text AS reporting_person_name,
             u.designation_id,
             d.name::text AS designation_name,
-            u.medium_of_education,
+            u.medium_of_education::text,
             u.is_active,
             (DATE_PART('year', AGE(NOW(), u.experience)) 
                       + DATE_PART('month', AGE(NOW(), u.experience)) / 100)::numeric AS experience_years
@@ -65,7 +65,7 @@ BEGIN
             rp.full_name::text AS reporting_person_name,
             u.designation_id,
             d.name::text AS designation_name,
-            u.medium_of_education,
+            u.medium_of_education::text,
             u.is_active,
             (DATE_PART('year', AGE(NOW(), u.experience)) 
                       + DATE_PART('month', AGE(NOW(), u.experience)) / 100)::numeric AS experience_years
@@ -84,7 +84,7 @@ BEGIN
             fh.reporting_person_name,
             fh.designation_id,
             fh.designation_name,
-            fh.medium_of_education,
+            fh.medium_of_education::text,
             fh.experience_years,
             COUNT(cm.user_id)::bigint AS attempts_count,
             MAX(cm.date)::timestamp AS last_communication_date
@@ -135,7 +135,7 @@ BEGIN
             rp.full_name::text AS reporting_person_name,
             u.designation_id,
             d.name::text AS designation_name,
-            u.medium_of_education,
+            u.medium_of_education::text,
             u.is_active,
             (DATE_PART('year', AGE(NOW(), u.experience)) 
                       + DATE_PART('month', AGE(NOW(), u.experience)) / 100)::numeric AS experience_years
@@ -160,7 +160,7 @@ BEGIN
             rp.full_name::text AS reporting_person_name,
             u.designation_id,
             d.name::text AS designation_name,
-            u.medium_of_education,
+            u.medium_of_education::text,
             u.is_active,
             (DATE_PART('year', AGE(NOW(), u.experience)) 
                       + DATE_PART('month', AGE(NOW(), u.experience)) / 100)::numeric AS experience_years
@@ -181,7 +181,7 @@ BEGIN
             rh.reporting_person_name,
             rh.designation_id,
             rh.designation_name,
-            rh.medium_of_education,
+            rh.medium_of_education::text,
             rh.experience_years,
             COUNT(cm.user_id)::bigint AS attempts_count,
             MAX(cm.date)::timestamp AS last_communication_date
@@ -214,7 +214,7 @@ BEGIN
         json_build_object('id', ch.designation_id, 'name', ch.designation_name) AS designation,
         ch.experience_years,
         ch.attempts_count,
-        ch.medium_of_education,
+        ch.medium_of_education::text,
         ch.last_communication_date
     FROM combined_hierarchy ch
     CROSS JOIN total t
@@ -231,8 +231,8 @@ BEGIN
         CASE WHEN order_field = 'attempts_count' AND order_direction = 'DESC' THEN ch.attempts_count END DESC,
         CASE WHEN order_field = 'last_communication_date' AND order_direction = 'ASC' THEN ch.last_communication_date END ASC,
         CASE WHEN order_field = 'last_communication_date' AND order_direction = 'DESC' THEN ch.last_communication_date END DESC,
-        CASE WHEN order_field = 'medium_of_education' AND order_direction = 'ASC' THEN ch.medium_of_education END ASC,
-        CASE WHEN order_field = 'medium_of_education' AND order_direction = 'DESC' THEN ch.medium_of_education END DESC
+        CASE WHEN order_field = 'education_medium' AND order_direction = 'ASC' THEN ch.medium_of_education END ASC,
+        CASE WHEN order_field = 'education_medium' AND order_direction = 'DESC' THEN ch.medium_of_education END DESC
     LIMIT limit_val
     OFFSET offset_val;
 END;

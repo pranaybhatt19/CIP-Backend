@@ -229,65 +229,96 @@ const getPracticeDetailsByUserId = async (
       .andWhere("practice.is_deleted = :status", { status: false });
 
     if (dateExact || dateFrom || dateTo) {
-      
-      const startOfDay = (d: Date) => { const x = new Date(d); x.setHours(0,0,0,0); return x; };
-      const nextDay = (d: Date) => { const x = new Date(d); x.setDate(x.getDate()+1); x.setHours(0,0,0,0); return x; };
+      const startOfDay = (d: Date) => {
+        const x = new Date(d);
+        x.setHours(0, 0, 0, 0);
+        return x;
+      };
+      const nextDay = (d: Date) => {
+        const x = new Date(d);
+        x.setDate(x.getDate() + 1);
+        x.setHours(0, 0, 0, 0);
+        return x;
+      };
 
       // Grouped OR condition to handle edge cases: (exact-day) OR (from..to both) OR (from-only) OR (to-only)
-      queryBuilder.andWhere(new Brackets(qb => {
-        let anyConditionAdded = false;
+      queryBuilder.andWhere(
+        new Brackets((qb) => {
+          let anyConditionAdded = false;
 
-        if (dateExact) {
-          const dt = parseToDate(dateExact);
-          if (!dt) {
-            return res.status(400).json({ message: "Invalid dateExact format. Use YYYY-MM-DD or a valid date." });
-          }
-          const exactStart = startOfDay(new Date(dt));
-          const exactEnd = nextDay(exactStart);
-          qb.where("practice.date >= :exactStart AND practice.date < :exactEnd", { exactStart, exactEnd });
-          anyConditionAdded = true;
-        }
-
-        if (dateFrom && dateTo) {
-          const from = parseToDate(dateFrom);
-          const to = parseToDate(dateTo);
-          if (!from || !to) {
-            return res.status(400).json({ message: "Invalid dateFrom/dateTo format. Use YYYY-MM-DD or a valid date." });
-          }
-          const fromStart = startOfDay(new Date(from));
-          const toExclusive = nextDay(new Date(to));
-          if (!anyConditionAdded) {
-            qb.where("practice.date >= :fromStart AND practice.date < :toExclusive", { fromStart, toExclusive });
-            anyConditionAdded = true;
-          } else {
-            qb.orWhere("practice.date >= :fromStart AND practice.date < :toExclusive", { fromStart, toExclusive });
-          }
-        } else {
-          if (dateFrom) {
-            const from = parseToDate(dateFrom);
-            if (!from) return res.status(400).json({ message: "Invalid dateFrom format." });
-            const fromStart = startOfDay(new Date(from));
-            if (!anyConditionAdded) {
-              qb.where("practice.date >= :fromStart", { fromStart });
-              anyConditionAdded = true;
-            } else {
-              qb.orWhere("practice.date >= :fromStart", { fromStart });
+          if (dateExact) {
+            const dt = parseToDate(dateExact);
+            if (!dt) {
+              return res.status(400).json({
+                message:
+                  "Invalid dateExact format. Use YYYY-MM-DD or a valid date.",
+              });
             }
+            const exactStart = startOfDay(new Date(dt));
+            const exactEnd = nextDay(exactStart);
+            qb.where(
+              "practice.date >= :exactStart AND practice.date < :exactEnd",
+              { exactStart, exactEnd }
+            );
+            anyConditionAdded = true;
           }
 
-          if (dateTo) {
+          if (dateFrom && dateTo) {
+            const from = parseToDate(dateFrom);
             const to = parseToDate(dateTo);
-            if (!to) return res.status(400).json({ message: "Invalid dateTo format." });
+            if (!from || !to) {
+              return res.status(400).json({
+                message:
+                  "Invalid dateFrom/dateTo format. Use YYYY-MM-DD or a valid date.",
+              });
+            }
+            const fromStart = startOfDay(new Date(from));
             const toExclusive = nextDay(new Date(to));
             if (!anyConditionAdded) {
-              qb.where("practice.date < :toExclusive", { toExclusive });
+              qb.where(
+                "practice.date >= :fromStart AND practice.date < :toExclusive",
+                { fromStart, toExclusive }
+              );
               anyConditionAdded = true;
             } else {
-              qb.orWhere("practice.date < :toExclusive", { toExclusive });
+              qb.orWhere(
+                "practice.date >= :fromStart AND practice.date < :toExclusive",
+                { fromStart, toExclusive }
+              );
+            }
+          } else {
+            if (dateFrom) {
+              const from = parseToDate(dateFrom);
+              if (!from)
+                return res
+                  .status(400)
+                  .json({ message: "Invalid dateFrom format." });
+              const fromStart = startOfDay(new Date(from));
+              if (!anyConditionAdded) {
+                qb.where("practice.date >= :fromStart", { fromStart });
+                anyConditionAdded = true;
+              } else {
+                qb.orWhere("practice.date >= :fromStart", { fromStart });
+              }
+            }
+
+            if (dateTo) {
+              const to = parseToDate(dateTo);
+              if (!to)
+                return res
+                  .status(400)
+                  .json({ message: "Invalid dateTo format." });
+              const toExclusive = nextDay(new Date(to));
+              if (!anyConditionAdded) {
+                qb.where("practice.date < :toExclusive", { toExclusive });
+                anyConditionAdded = true;
+              } else {
+                qb.orWhere("practice.date < :toExclusive", { toExclusive });
+              }
             }
           }
-        }
-      }));
+        })
+      );
     }
 
     if (order && order.length > 0) {
@@ -508,7 +539,7 @@ const searchUsersFilter = async (
     const functionName = isTreeView
       ? "get_user_tree_hierarchy"
       : "get_user_hierarchy";
-    const sql = `SELECT * FROM cip_schema.${functionName}($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`;
+    const sql = `SELECT * FROM cip_schema.${functionName}($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,$16)`;
 
     const rows = await AppDataSource.manager.query(sql, values);
     if (!isTreeView) {
@@ -582,7 +613,10 @@ const getDesignationsList = async (
   }
 };
 
-const getUserCompleteDetails = async (req: Request, res: Response): Promise<any> => {
+const getUserCompleteDetails = async (
+  req: Request,
+  res: Response
+): Promise<any> => {
   try {
     const { id } = req.params;
 
@@ -630,21 +664,22 @@ const getUserCompleteDetails = async (req: Request, res: Response): Promise<any>
       last_name: rawData.user_last_name,
       email: rawData.user_email,
       experience_start_date: rawData.user_experience,
-      experience_years: Number(rawData.experience_years), 
+      experience_years: Number(rawData.experience_years),
       is_active: rawData.user_is_active,
-      medium_of_education: String(rawData.user_medium_of_education).charAt(0).toUpperCase() 
-                          + String(rawData.user_medium_of_education).slice(1).toLowerCase(),
+      medium_of_education:
+        String(rawData.user_medium_of_education).charAt(0).toUpperCase() +
+        String(rawData.user_medium_of_education).slice(1).toLowerCase(),
       designation: {
         name: rawData.user_designation_name,
       },
       reporting_person: rawData.reporting_person_id
         ? {
-          id: rawData.reporting_person_id,
-          full_name: rawData.reporting_person_full_name,
-          designation: {
-            name: rawData.reporting_person_designation_name,
-          },
-        }
+            id: rawData.reporting_person_id,
+            full_name: rawData.reporting_person_full_name,
+            designation: {
+              name: rawData.reporting_person_designation_name,
+            },
+          }
         : null,
     };
 
