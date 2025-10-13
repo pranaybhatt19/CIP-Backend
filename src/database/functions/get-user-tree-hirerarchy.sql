@@ -230,7 +230,8 @@ BEGIN
         ch.experience_years,
         ch.attempts_count,
         ch.medium_of_education::text,
-        ch.last_communication_date
+        ch.last_communication_date,
+        ch.link
     FROM combined_hierarchy ch
     CROSS JOIN total t
     ORDER BY

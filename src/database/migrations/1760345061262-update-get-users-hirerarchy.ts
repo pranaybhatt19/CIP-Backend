@@ -39,7 +39,8 @@ export class UpdateGetUsersHirerarchy1760345061262
             experience_years numeric,
             attempts_count bigint,
             medium_of_education text,
-            last_communication_date timestamp
+            last_communication_date timestamp,
+            link text
         )
         LANGUAGE plpgsql
         AS $$
@@ -87,7 +88,14 @@ export class UpdateGetUsersHirerarchy1760345061262
                 SELECT
                     uh.*,
                     COALESCE(COUNT(cm.user_id), 0)::bigint AS attempts_count,
-                    MAX(cm.date)::timestamp AS last_communication_date
+                    MAX(cm.date)::timestamp AS last_communication_date,
+                    (
+                    SELECT c2.link
+                    FROM cip_schema.communications c2
+                    WHERE c2.user_id = uh.id AND c2.is_deleted = false
+                    ORDER BY c2.date DESC NULLS LAST
+                    LIMIT 1
+                    )::text AS link
                 FROM user_hierarchy uh
                 LEFT JOIN cip_schema.communications cm ON cm.user_id = uh.id AND cm.is_deleted = false
                 GROUP BY 
@@ -136,7 +144,8 @@ export class UpdateGetUsersHirerarchy1760345061262
                 fh.experience_years,
                 fh.attempts_count,
                 fh.medium_of_education::text,
-                fh.last_communication_date
+                fh.last_communication_date,
+                fh.link
             FROM filtered_hierarchy fh
             ORDER BY
                 CASE WHEN order_field = 'full_name' AND order_direction = 'ASC' THEN fh.full_name END ASC NULLS LAST,
