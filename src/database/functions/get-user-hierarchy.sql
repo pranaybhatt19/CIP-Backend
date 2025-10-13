@@ -27,7 +27,7 @@ RETURNS TABLE(
     email text,
     reporting_person json,
     designation json,
-    experience_years text,
+    experience_years numeric,
     attempts_count bigint,
     medium_of_education text,
     last_communication_date timestamp,
@@ -48,11 +48,8 @@ BEGIN
             d.name::text AS designation_name,
             u.medium_of_education::text,
             u.is_active,
-            TO_CHAR(
-                DATE_PART('year', AGE(NOW(), u.experience))
-                + DATE_PART('month', AGE(NOW(), u.experience)) / 100.0
-                , 'FM999990D00'
-            ) AS experience_years
+            (DATE_PART('year', AGE(NOW(), u.experience)) 
+                + DATE_PART('month', AGE(NOW(), u.experience)) / 100)::numeric AS experience_years
         FROM cip_schema.users u
         LEFT JOIN cip_schema.users rp ON rp.id = u.reporting_person_id
         LEFT JOIN cip_schema.designations d ON d.id = u.designation_id
@@ -70,11 +67,8 @@ BEGIN
             d.name::text AS designation_name,
             u.medium_of_education::text,
             u.is_active,
-            TO_CHAR(
-                DATE_PART('year', AGE(NOW(), u.experience))
-                + DATE_PART('month', AGE(NOW(), u.experience)) / 100.0
-                , 'FM999990D00'
-            ) AS experience_years
+            (DATE_PART('year', AGE(NOW(), u.experience)) 
+                + DATE_PART('month', AGE(NOW(), u.experience)) / 100)::numeric AS experience_years
         FROM cip_schema.users u
         INNER JOIN user_hierarchy h ON u.reporting_person_id = h.id
         LEFT JOIN cip_schema.users rp ON rp.id = u.reporting_person_id
@@ -110,9 +104,9 @@ BEGIN
             AND (reporting_person_ids IS NULL OR uh.reporting_person_id = ANY(reporting_person_ids))
             AND (
                 experience_type IS NULL OR experience_value IS NULL OR
-                (experience_type = 'LESS_THAN' AND (uh.experience_years::numeric) < experience_value) OR
-                (experience_type = 'GREATER_THAN' AND (uh.experience_years::numeric) > experience_value) OR
-                (experience_type = 'EQUALS' AND (uh.experience_years::numeric) = experience_value)
+                (experience_type = 'LESS_THAN' AND uh.experience_years < experience_value) OR
+                (experience_type = 'GREATER_THAN' AND uh.experience_years > experience_value) OR
+                (experience_type = 'EQUALS' AND uh.experience_years = experience_value)
             )
             AND (
                 attempts_type IS NULL OR attempts_value IS NULL OR

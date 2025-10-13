@@ -547,7 +547,7 @@ const searchUsersFilter = async (
       const totalCount = rows.length > 0 ? parseInt(rows[0].total_count, 0) : 0;
       const data = rows.map((user: any) => ({
         ...user,
-        experience: user.experience_years,
+        experience: Number(user.experience_years).toFixed(2),
         education_medium: user.medium_of_education,
         attempts: parseInt(user.attempts_count, 0),
       }));
