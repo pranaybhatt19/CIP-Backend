@@ -128,13 +128,13 @@ BEGIN
             )
             AND (
             (last_comm_exact IS NULL AND last_comm_from IS NULL AND last_comm_to IS NULL)
-            OR (last_comm_exact IS NOT NULL AND DATE(uh.last_communication_date) = DATE(last_comm_exact))
+            OR (last_comm_exact IS NOT NULL AND DATE(MAX(cm.date)) = DATE(last_comm_exact))
             OR (last_comm_from IS NOT NULL AND last_comm_to IS NOT NULL
-                AND uh.last_communication_date BETWEEN last_comm_from AND last_comm_to)
+                AND MAX(cm.date) BETWEEN last_comm_from AND last_comm_to)
             OR (last_comm_from IS NOT NULL AND last_comm_to IS NULL
-                AND uh.last_communication_date BETWEEN last_comm_from AND NOW())
+                AND MAX(cm.date) BETWEEN last_comm_from AND NOW())
             OR (last_comm_from IS NULL AND last_comm_to IS NOT NULL
-                AND uh.last_communication_date <= last_comm_to)
+                AND MAX(cm.date) <= last_comm_to)
             )
     ),
 

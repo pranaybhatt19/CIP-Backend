@@ -462,7 +462,13 @@ const buildUserHierarchy = (users: User[], currentUserId: number) => {
   const roots: any[] = [];
 
   users.forEach((user: any) => {
-    const { total_count, experience_years, attempts_count, ...rest } = user;
+    const {
+      total_count,
+      experience_years,
+      attempts_count,
+      medium_of_education,
+      ...rest
+    } = user;
 
     userMap[user.user_id] = {
       ...rest,
@@ -545,12 +551,19 @@ const searchUsersFilter = async (
     const rows = await AppDataSource.manager.query(sql, values);
     if (!isTreeView) {
       const totalCount = rows.length > 0 ? parseInt(rows[0].total_count, 0) : 0;
-      const data = rows.map((user: any) => ({
-        ...user,
-        experience: Number(user.experience_years).toFixed(2),
-        education_medium: user.medium_of_education,
-        attempts: parseInt(user.attempts_count, 0),
-      }));
+      const data = rows.map(
+        ({
+          experience_years,
+          medium_of_education,
+          attempts_count,
+          ...rest
+        }: any) => ({
+          ...rest,
+          experience: Number(experience_years).toFixed(2),
+          education_medium: medium_of_education,
+          attempts: parseInt(attempts_count, 0),
+        })
+      );
       return res.status(200).json({
         data: { totalCount, data },
         message: "Users fetched successfully",
