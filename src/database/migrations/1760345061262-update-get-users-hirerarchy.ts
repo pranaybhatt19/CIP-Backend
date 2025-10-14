@@ -8,7 +8,7 @@ export class UpdateGetUsersHirerarchy1760345061262
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
         DROP FUNCTION IF EXISTS cip_schema.get_user_hierarchy(
-            integer, text, integer[], integer[], text, numeric, text, numeric, timestamp, timestamp, timestamp, integer, integer, text, text
+            integer, text,text[], integer[], integer[], text, numeric, text, numeric, timestamp, timestamp, timestamp, integer, integer, text, text
         );
 
         CREATE FUNCTION cip_schema.get_user_hierarchy(

@@ -1,24 +1,24 @@
 DROP FUNCTION IF EXISTS cip_schema.get_user_hierarchy(
-    integer, text, integer[], integer[], text, numeric, text, numeric, timestamp, timestamp, timestamp, integer, integer, text, text
+    integer, text, text[], integer[], integer[], text, numeric, text, numeric, timestamp, timestamp, timestamp, integer, integer, text, text
 );
 
 CREATE FUNCTION cip_schema.get_user_hierarchy(
-    root_user_id integer,
-    name_filter text,
-    education_medium text[],
-    designation_ids integer[],
-    reporting_person_ids integer[],
-    experience_type text,
-    experience_value numeric,
-    attempts_type text,
-    attempts_value numeric,
-    last_comm_exact timestamp,
-    last_comm_from timestamp,
-    last_comm_to timestamp,
-    limit_val integer,
-    offset_val integer,
-    order_field text,
-    order_direction text
+root_user_id integer,
+name_filter text,
+education_medium text[],
+designation_ids integer[],
+reporting_person_ids integer[],
+experience_type text,
+experience_value numeric,
+attempts_type text,
+attempts_value numeric,
+last_comm_exact timestamp,
+last_comm_from timestamp,
+last_comm_to timestamp,
+limit_val integer,
+offset_val integer,
+order_field text,
+order_direction text
 )
 RETURNS TABLE(
     total_count bigint,
@@ -81,11 +81,11 @@ BEGIN
             COALESCE(COUNT(cm.user_id), 0)::bigint AS attempts_count,
             MAX(cm.date)::timestamp AS last_communication_date,
             (
-              SELECT c2.link
-              FROM cip_schema.communications c2
-              WHERE c2.user_id = uh.id AND c2.is_deleted = false
-              ORDER BY c2.date DESC NULLS LAST
-              LIMIT 1
+            SELECT c2.link
+            FROM cip_schema.communications c2
+            WHERE c2.user_id = uh.id AND c2.is_deleted = false
+            ORDER BY c2.date DESC NULLS LAST
+            LIMIT 1
             )::text AS link
         FROM user_hierarchy uh
         LEFT JOIN cip_schema.communications cm ON cm.user_id = uh.id AND cm.is_deleted = false
@@ -117,8 +117,12 @@ BEGIN
             AND (
             (last_comm_exact IS NULL AND last_comm_from IS NULL AND last_comm_to IS NULL)
             OR (last_comm_exact IS NOT NULL AND DATE(uh.last_communication_date) = DATE(last_comm_exact))
-            OR (last_comm_from IS NOT NULL AND last_comm_to IS NOT NULL 
+            OR (last_comm_from IS NOT NULL AND last_comm_to IS NOT NULL
                 AND uh.last_communication_date BETWEEN last_comm_from AND last_comm_to)
+            OR (last_comm_from IS NOT NULL AND last_comm_to IS NULL
+                AND uh.last_communication_date BETWEEN last_comm_from AND NOW())
+            OR (last_comm_from IS NULL AND last_comm_to IS NOT NULL
+                AND uh.last_communication_date <= last_comm_to)
             )
             AND (education_medium IS NULL OR uh.medium_of_education = ANY(education_medium))
             AND uh.is_active = true 

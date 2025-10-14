@@ -1,24 +1,24 @@
 DROP FUNCTION IF EXISTS cip_schema.get_user_tree_hierarchy(
-    integer, text, integer[], integer[], text, numeric, text, numeric, timestamp,timestamp,timestamp,integer, integer, text, text
+    integer, text,text[], integer[], integer[], text, numeric, text, numeric, timestamp,timestamp,timestamp,integer, integer, text, text
 );
 
 CREATE FUNCTION cip_schema.get_user_tree_hierarchy(
-    root_user_id integer,
-    name_filter text,
-    education_medium text[],
-    designation_ids integer[],
-    reporting_person_ids integer[],
-    experience_type text,
-    experience_value numeric,
-    attempts_type text,
-    attempts_value numeric,
-    last_comm_exact timestamp,
-    last_comm_from timestamp,
-    last_comm_to timestamp,
-    limit_val integer,
-    offset_val integer,
-    order_field text,
-    order_direction text
+root_user_id integer,
+name_filter text,
+education_medium text[],
+designation_ids integer[],
+reporting_person_ids integer[],
+experience_type text,
+experience_value numeric,
+attempts_type text,
+attempts_value numeric,
+last_comm_exact timestamp,
+last_comm_from timestamp,
+last_comm_to timestamp,
+limit_val integer,
+offset_val integer,
+order_field text,
+order_direction text
 )
 RETURNS TABLE(
     total_count bigint,
@@ -50,7 +50,7 @@ BEGIN
             u.medium_of_education::text,
             u.is_active,
             (DATE_PART('year', AGE(NOW(), u.experience)) 
-                      + DATE_PART('month', AGE(NOW(), u.experience)) / 100)::numeric AS experience_years
+                    + DATE_PART('month', AGE(NOW(), u.experience)) / 100)::numeric AS experience_years
         FROM cip_schema.users u
         LEFT JOIN cip_schema.users rp ON rp.id = u.reporting_person_id
         LEFT JOIN cip_schema.designations d ON d.id = u.designation_id
@@ -69,7 +69,7 @@ BEGIN
             u.medium_of_education::text,
             u.is_active,
             (DATE_PART('year', AGE(NOW(), u.experience)) 
-                      + DATE_PART('month', AGE(NOW(), u.experience)) / 100)::numeric AS experience_years
+                    + DATE_PART('month', AGE(NOW(), u.experience)) / 100)::numeric AS experience_years
         FROM cip_schema.users u
         INNER JOIN forward_hierarchy h ON u.reporting_person_id = h.id
         LEFT JOIN cip_schema.users rp ON rp.id = u.reporting_person_id
@@ -90,11 +90,11 @@ BEGIN
             COUNT(cm.user_id)::bigint AS attempts_count,
             MAX(cm.date)::timestamp AS last_communication_date,
             (
-              SELECT c2.link
-              FROM cip_schema.communications c2
-              WHERE c2.user_id = fh.id AND c2.is_deleted = false
-              ORDER BY c2.date DESC NULLS LAST
-              LIMIT 1
+            SELECT c2.link
+            FROM cip_schema.communications c2
+            WHERE c2.user_id = fh.id AND c2.is_deleted = false
+            ORDER BY c2.date DESC NULLS LAST
+            LIMIT 1
             )::text AS link
         FROM forward_hierarchy fh
         LEFT JOIN cip_schema.communications cm 
@@ -112,8 +112,8 @@ BEGIN
                 (experience_type = 'EQUALS' AND fh.experience_years = experience_value)
             )
             AND (
-               fh.reporting_person_id IS NOT NULL OR 
-               (fh.id = root_user_id AND fh.reporting_person_id IS NOT NULL)
+            fh.reporting_person_id IS NOT NULL OR 
+            (fh.id = root_user_id AND fh.reporting_person_id IS NOT NULL)
             )
             AND (education_medium IS NULL OR fh.medium_of_education = ANY(education_medium))
         GROUP BY 
@@ -128,9 +128,13 @@ BEGIN
             )
             AND (
             (last_comm_exact IS NULL AND last_comm_from IS NULL AND last_comm_to IS NULL)
-            OR (last_comm_exact IS NOT NULL AND DATE(MAX(cm.date)) = DATE(last_comm_exact))
-            OR (last_comm_from IS NOT NULL AND last_comm_to IS NOT NULL 
-                AND MAX(cm.date) BETWEEN last_comm_from AND last_comm_to)
+            OR (last_comm_exact IS NOT NULL AND DATE(uh.last_communication_date) = DATE(last_comm_exact))
+            OR (last_comm_from IS NOT NULL AND last_comm_to IS NOT NULL
+                AND uh.last_communication_date BETWEEN last_comm_from AND last_comm_to)
+            OR (last_comm_from IS NOT NULL AND last_comm_to IS NULL
+                AND uh.last_communication_date BETWEEN last_comm_from AND NOW())
+            OR (last_comm_from IS NULL AND last_comm_to IS NOT NULL
+                AND uh.last_communication_date <= last_comm_to)
             )
     ),
 
@@ -146,7 +150,7 @@ BEGIN
             u.medium_of_education::text,
             u.is_active,
             (DATE_PART('year', AGE(NOW(), u.experience)) 
-                      + DATE_PART('month', AGE(NOW(), u.experience)) / 100)::numeric AS experience_years
+                    + DATE_PART('month', AGE(NOW(), u.experience)) / 100)::numeric AS experience_years
         FROM cip_schema.users u
         LEFT JOIN cip_schema.users rp ON rp.id = u.reporting_person_id
         LEFT JOIN cip_schema.designations d ON d.id = u.designation_id
@@ -171,7 +175,7 @@ BEGIN
             u.medium_of_education::text,
             u.is_active,
             (DATE_PART('year', AGE(NOW(), u.experience)) 
-                      + DATE_PART('month', AGE(NOW(), u.experience)) / 100)::numeric AS experience_years
+                    + DATE_PART('month', AGE(NOW(), u.experience)) / 100)::numeric AS experience_years
         FROM cip_schema.users u
         INNER JOIN reverse_hierarchy rh ON u.id = rh.reporting_person_id
         LEFT JOIN cip_schema.users rp ON rp.id = u.reporting_person_id
@@ -194,11 +198,11 @@ BEGIN
             COUNT(cm.user_id)::bigint AS attempts_count,
             MAX(cm.date)::timestamp AS last_communication_date,
             (
-              SELECT c2.link
-              FROM cip_schema.communications c2
-              WHERE c2.user_id = rh.id AND c2.is_deleted = false
-              ORDER BY c2.date DESC NULLS LAST
-              LIMIT 1
+            SELECT c2.link
+            FROM cip_schema.communications c2
+            WHERE c2.user_id = rh.id AND c2.is_deleted = false
+            ORDER BY c2.date DESC NULLS LAST
+            LIMIT 1
             )::text AS link
         FROM reverse_hierarchy rh
         LEFT JOIN cip_schema.communications cm 
