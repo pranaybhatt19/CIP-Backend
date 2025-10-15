@@ -84,6 +84,17 @@ export const searchUsersSchema = {
         "array.min": "Please select at least one designation",
       }),
 
+    tags_filter: Joi.array()
+    .items(
+      Joi.string().messages({
+        "string.base": "Each tag must be a string",
+      })
+    )
+    .optional()
+    .messages({
+      "array.base": "Tags must be an array of tag",
+    }),
+
     experience: experienceFilterSchema.optional(),
     education_medium: Joi.array()
       .items(

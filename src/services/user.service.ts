@@ -1,17 +1,18 @@
 import { Request, Response } from "express";
 import { AppDataSource } from "../database/config/data-source";
 import bcrypt from "bcryptjs";
-import { Communications, Designation, User } from "../entities";
+import { Communications, Designation, Tags, User } from "../entities";
 import { generatePassword, passwordValidation } from "../utils/validators";
 import { registeredEmailTemplate, sendEmail } from "../utils/email-manager";
 import { AddNewUserDto, AddPracticeDto } from "../dto";
-import { ISavePractice } from "../interfaces";
+import { ISavedResponse, ISavePractice } from "../interfaces";
 import { AuthRequest } from "../middlewares/auth.middleware";
 import { Brackets } from "typeorm";
 
 const userRepository = AppDataSource.getRepository(User);
 const designationsRepository = AppDataSource.getRepository(Designation);
 const communicationRepository = AppDataSource.getRepository(Communications);
+const tagsRepository = AppDataSource.getRepository(Tags);
 
 const registerUser = async (req: Request, res: Response): Promise<any> => {
   const {
@@ -509,6 +510,7 @@ const searchUsersFilter = async (
     const {
       full_name: nameFilter,
       education_medium,
+      tags_filter,
       designation_ids: rawDesignationIds,
       reporting_persons_ids: rawReportingPersonIds,
       experience,
@@ -542,11 +544,12 @@ const searchUsersFilter = async (
       offset ?? 0,
       order?.[0]?.[0] ?? "full_name",
       order?.[0]?.[1] ?? "ASC",
+      tags_filter,
     ];
     const functionName = isTreeView
       ? "get_user_tree_hierarchy"
       : "get_user_hierarchy";
-    const sql = `SELECT * FROM cip_schema.${functionName}($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,$16)`;
+    const sql = `SELECT * FROM cip_schema.${functionName}($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`;
 
     const rows = await AppDataSource.manager.query(sql, values);
     if (!isTreeView) {
@@ -740,6 +743,94 @@ const getMediumDetails = async (req: Request, res: Response): Promise<any> => {
   }
 };
 
+const addTags = async (req: Request, res: Response): Promise<any> => {
+  try{
+    const { id, tags } = req.body;
+    
+    if (!id) {
+      return res
+        .status(400)
+        .json({ message: "User-Id must be provided" });
+    }
+
+    if (Array.isArray(tags) && tags.length == 0) {
+      return res
+        .status(400)
+        .json({ message: "Tag associated with user must be provided" });
+    }
+
+    const user: User | null = await userRepository.findOne({
+      where: { id: +id }
+    });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const savedStatus: ISavedResponse | undefined = await saveUserTags(user, tags);
+    if (!savedStatus || !savedStatus.status) {
+      return res.status(500).json({
+        message: savedStatus?.message || "Error saving tags",
+      });
+    }
+
+    return res.status(200).json({ message: "Tags associated with this user is added successfully" });
+  } catch(err: any){
+    return res.status(500).json({ message: err.message || "Error while adding tag to user" });
+  }
+};
+
+const saveUserTags = async (user: User, tags: []): Promise<ISavedResponse> => {
+  const response: ISavedResponse = {
+    message: "",
+    status: false
+  }
+  try {
+    await tagsRepository.delete({
+      user: { id: user.id }
+    });
+
+    const toSave = tags.map((tag: string) =>
+      tagsRepository.create({
+        user: user,
+        tag: tag.toLowerCase().trim(),
+      })
+    );
+
+    await tagsRepository.save(toSave);
+
+    response.status = true;
+    response.message = "Tags assigned to user successfully";
+    return response;
+  } catch (err: any) {
+    response.message = err.message || "Failed to assign tags to user, Please try again"
+    return response;
+  }
+}
+
+const getExistingTags = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const tags: Tags[] = await tagsRepository
+      .createQueryBuilder('t')
+      .select('DISTINCT t.tag', 'tag')
+      .getRawMany();
+
+    if (!tags || tags.length == 0) {
+      return res.status(200).json({ message: "No tags found" });
+    }
+
+    const tagsPayload = tags.map((tagRecord: any) => (
+      String(tagRecord.tag).charAt(0).toUpperCase() + String(tagRecord.tag).slice(1).toLowerCase()
+    ));
+
+    return res
+      .status(200)
+      .json({ message: "Tags fetched successfully", data: tagsPayload });
+  } catch (err: any) {
+    console.error("Error fetching Tags:", err);
+    return res.status(500).json({ message: err.message || "Error fetching Tags" });
+  }
+}
+
 export {
   registerUser,
   searchUsersFilter,
@@ -751,4 +842,6 @@ export {
   getPracticeDetailsByUserId,
   getUserCompleteDetails,
   getMediumDetails,
+  addTags,
+  getExistingTags,
 };
