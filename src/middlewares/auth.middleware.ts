@@ -12,6 +12,7 @@ export interface AuthRequest extends Request {
     designation: string;
     activeStatus: boolean;
     mediumOfEducation: string | null;
+    reportingPerson: any;
   };
 }
 
@@ -77,6 +78,10 @@ export const authenticate = async (
       designation: dbUser.designation.name,
       activeStatus: dbUser.is_active,
       mediumOfEducation: dbUser.medium_of_education,
+      reportingPerson: dbUser?.reporting_person ? {
+        id: dbUser?.reporting_person?.id,
+        name: dbUser?.reporting_person?.full_name,
+      } as any : null,
       // experience: experience,
       // reportingPerson: dbUser?.reporting_person ? {
       //   sub: dbUser?.reporting_person?.id,

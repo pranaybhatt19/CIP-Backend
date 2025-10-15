@@ -72,6 +72,10 @@ const loginUser = async (req: Request, res: Response): Promise<any> => {
       },
       activeStatus: userDetails.is_active,
       mediumOfEducation: userDetails.medium_of_education,
+      reportingPerson: userDetails?.reporting_person ? {
+        id: userDetails?.reporting_person?.id,
+        name: userDetails?.reporting_person?.full_name,
+      } as any : null,
       // experience: experience,
       // reportingPerson: userDetails?.reporting_person ? {
       //  sub: userDetails?.reporting_person?.id,
