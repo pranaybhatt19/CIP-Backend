@@ -1,5 +1,5 @@
 DROP FUNCTION IF EXISTS cip_schema.get_user_hierarchy(
-    integer, text, text[], integer[], integer[], text, numeric, text, numeric, timestamp, timestamp, timestamp, integer, integer, text, text, text[]
+    integer, text, text[], integer[], integer[], text, numeric, text, numeric, timestamp, timestamp, timestamp, integer, integer, text, text
 );
  
 CREATE FUNCTION cip_schema.get_user_hierarchy(
