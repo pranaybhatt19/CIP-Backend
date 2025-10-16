@@ -741,13 +741,11 @@ const getMediumDetails = async (req: Request, res: Response): Promise<any> => {
 };
 
 const addTags = async (req: Request, res: Response): Promise<any> => {
-  try{
+  try {
     const { id, tags } = req.body;
-    
+
     if (!id) {
-      return res
-        .status(400)
-        .json({ message: "User-Id must be provided" });
+      return res.status(400).json({ message: "User-Id must be provided" });
     }
 
     if (Array.isArray(tags) && tags.length == 0) {
@@ -757,33 +755,40 @@ const addTags = async (req: Request, res: Response): Promise<any> => {
     }
 
     const user: User | null = await userRepository.findOne({
-      where: { id: +id }
+      where: { id: +id },
     });
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    const savedStatus: ISavedResponse | undefined = await saveUserTags(user, tags);
+    const savedStatus: ISavedResponse | undefined = await saveUserTags(
+      user,
+      tags
+    );
     if (!savedStatus || !savedStatus.status) {
       return res.status(500).json({
         message: savedStatus?.message || "Error saving tags",
       });
     }
 
-    return res.status(200).json({ message: "Tags associated with this user is added successfully" });
-  } catch(err: any){
-    return res.status(500).json({ message: err.message || "Error while adding tag to user" });
+    return res.status(200).json({
+      message: "Tags associated with this user is added successfully",
+    });
+  } catch (err: any) {
+    return res
+      .status(500)
+      .json({ message: err.message || "Error while adding tag to user" });
   }
 };
 
 const saveUserTags = async (user: User, tags: []): Promise<ISavedResponse> => {
   const response: ISavedResponse = {
     message: "",
-    status: false
-  }
+    status: false,
+  };
   try {
     await tagsRepository.delete({
-      user: { id: user.id }
+      user: { id: user.id },
     });
 
     const toSave = tags.map((tag: string) =>
@@ -799,34 +804,39 @@ const saveUserTags = async (user: User, tags: []): Promise<ISavedResponse> => {
     response.message = "Tags assigned to user successfully";
     return response;
   } catch (err: any) {
-    response.message = err.message || "Failed to assign tags to user, Please try again"
+    response.message =
+      err.message || "Failed to assign tags to user, Please try again";
     return response;
   }
-}
+};
 
 const getExistingTags = async (req: Request, res: Response): Promise<any> => {
   try {
     const tags: Tags[] = await tagsRepository
-      .createQueryBuilder('t')
-      .select('DISTINCT t.tag', 'tag')
+      .createQueryBuilder("t")
+      .select("DISTINCT t.tag", "tag")
       .getRawMany();
 
     if (!tags || tags.length == 0) {
       return res.status(200).json({ message: "No tags found" });
     }
 
-    const tagsPayload = tags.map((tagRecord: any) => (
-      String(tagRecord.tag).charAt(0).toUpperCase() + String(tagRecord.tag).slice(1).toLowerCase()
-    ));
+    const tagsPayload = tags.map(
+      (tagRecord: any) =>
+        String(tagRecord.tag).charAt(0).toUpperCase() +
+        String(tagRecord.tag).slice(1).toLowerCase()
+    );
 
     return res
       .status(200)
       .json({ message: "Tags fetched successfully", data: tagsPayload });
   } catch (err: any) {
     console.error("Error fetching Tags:", err);
-    return res.status(500).json({ message: err.message || "Error fetching Tags" });
+    return res
+      .status(500)
+      .json({ message: err.message || "Error fetching Tags" });
   }
-}
+};
 
 export {
   registerUser,
