@@ -39,27 +39,8 @@ LANGUAGE plpgsql
 AS $$
 BEGIN
     RETURN QUERY
-    WITH RECURSIVE 
+    WITH RECURSIVE
     forward_hierarchy AS (
-        SELECT 
-            u.id,
-            u.full_name::text,
-            u.email::text,
-            u.reporting_person_id,
-            rp.full_name::text AS reporting_person_name,
-            u.designation_id,
-            d.name::text AS designation_name,
-            u.medium_of_education::text,
-            u.is_active,
-            (DATE_PART('year', AGE(NOW(), u.experience)) 
-                    + DATE_PART('month', AGE(NOW(), u.experience)) / 100)::numeric AS experience_years
-        FROM cip_schema.users u
-        LEFT JOIN cip_schema.users rp ON rp.id = u.reporting_person_id
-        LEFT JOIN cip_schema.designations d ON d.id = u.designation_id
-        WHERE u.id = root_user_id
-
-        UNION ALL
-
         SELECT
             u.id,
             u.full_name::text,
@@ -70,14 +51,33 @@ BEGIN
             d.name::text AS designation_name,
             u.medium_of_education::text,
             u.is_active,
-            (DATE_PART('year', AGE(NOW(), u.experience)) 
+            (DATE_PART('year', AGE(NOW(), u.experience))
+                    + DATE_PART('month', AGE(NOW(), u.experience)) / 100)::numeric AS experience_years
+        FROM cip_schema.users u
+        LEFT JOIN cip_schema.users rp ON rp.id = u.reporting_person_id
+        LEFT JOIN cip_schema.designations d ON d.id = u.designation_id
+        WHERE u.id = root_user_id
+ 
+        UNION ALL
+ 
+        SELECT
+            u.id,
+            u.full_name::text,
+            u.email::text,
+            u.reporting_person_id,
+            rp.full_name::text AS reporting_person_name,
+            u.designation_id,
+            d.name::text AS designation_name,
+            u.medium_of_education::text,
+            u.is_active,
+            (DATE_PART('year', AGE(NOW(), u.experience))
                     + DATE_PART('month', AGE(NOW(), u.experience)) / 100)::numeric AS experience_years
         FROM cip_schema.users u
         INNER JOIN forward_hierarchy h ON u.reporting_person_id = h.id
         LEFT JOIN cip_schema.users rp ON rp.id = u.reporting_person_id
         LEFT JOIN cip_schema.designations d ON d.id = u.designation_id
     ),
-
+ 
     filtered_forward_hierarchy AS (
         SELECT
             fh.id,
@@ -98,13 +98,15 @@ BEGIN
             ORDER BY c2.date DESC NULLS LAST
             LIMIT 1
             )::text AS link,
-            (ARRAY_REMOVE(ARRAY_AGG(DISTINCT tg.tag), NULL))::text[] AS tags
+            (
+            SELECT ARRAY_AGG(DISTINCT tg.tag)
+            FROM cip_schema.tags tg
+            WHERE tg.user_id = fh.id
+            )::text[] AS tags
         FROM forward_hierarchy fh
-        LEFT JOIN cip_schema.communications cm 
-            ON cm.user_id = fh.id 
+        LEFT JOIN cip_schema.communications cm
+            ON cm.user_id = fh.id
             AND cm.is_deleted = false
-        LEFT JOIN cip_schema.tags tg
-            ON tg.user_id = fh.id
         WHERE
             fh.is_active = true
             AND (name_filter IS NULL OR fh.full_name ILIKE '%' || name_filter || '%')
@@ -117,11 +119,11 @@ BEGIN
                 (experience_type = 'EQUALS' AND fh.experience_years = experience_value)
             )
             AND (
-            fh.reporting_person_id IS NOT NULL OR 
+            fh.reporting_person_id IS NOT NULL OR
             (fh.id = root_user_id AND fh.reporting_person_id IS NOT NULL)
             )
             AND (education_medium IS NULL OR fh.medium_of_education = ANY(education_medium))
-        GROUP BY 
+        GROUP BY
             fh.id, fh.full_name, fh.email, fh.reporting_person_id,
             fh.reporting_person_name, fh.designation_id, fh.designation_name,
             fh.is_active, fh.experience_years, fh.medium_of_education
@@ -142,11 +144,17 @@ BEGIN
                 AND MAX(cm.date) <= last_comm_to)
             )
             AND (
-                tags_filter IS NULL
-                OR (ARRAY_REMOVE(ARRAY_AGG(DISTINCT tg.tag), NULL) && tags_filter)
+            tags_filter IS NULL
+            OR (
+                (
+                    SELECT ARRAY_AGG(DISTINCT tg.tag)
+                    FROM cip_schema.tags tg
+                    WHERE tg.user_id = fh.id
+                )::text[] && tags_filter
+              )
             )
     ),
-
+ 
     reverse_hierarchy AS (
         SELECT DISTINCT
             u.id,
@@ -158,21 +166,21 @@ BEGIN
             d.name::text AS designation_name,
             u.medium_of_education::text,
             u.is_active,
-            (DATE_PART('year', AGE(NOW(), u.experience)) 
+            (DATE_PART('year', AGE(NOW(), u.experience))
                     + DATE_PART('month', AGE(NOW(), u.experience)) / 100)::numeric AS experience_years
         FROM cip_schema.users u
         LEFT JOIN cip_schema.users rp ON rp.id = u.reporting_person_id
         LEFT JOIN cip_schema.designations d ON d.id = u.designation_id
         WHERE u.id IN (
-            SELECT DISTINCT reporting_person_id 
-            FROM filtered_forward_hierarchy 
+            SELECT DISTINCT reporting_person_id
+            FROM filtered_forward_hierarchy
             WHERE reporting_person_id IS NOT NULL
         )
         AND u.id NOT IN (SELECT id FROM filtered_forward_hierarchy)
         AND u.reporting_person_id IS NOT NULL
-
+ 
         UNION ALL
-
+ 
         SELECT
             u.id,
             u.full_name::text,
@@ -183,7 +191,7 @@ BEGIN
             d.name::text AS designation_name,
             u.medium_of_education::text,
             u.is_active,
-            (DATE_PART('year', AGE(NOW(), u.experience)) 
+            (DATE_PART('year', AGE(NOW(), u.experience))
                     + DATE_PART('month', AGE(NOW(), u.experience)) / 100)::numeric AS experience_years
         FROM cip_schema.users u
         INNER JOIN reverse_hierarchy rh ON u.id = rh.reporting_person_id
@@ -192,7 +200,7 @@ BEGIN
         WHERE u.id NOT IN (SELECT id FROM filtered_forward_hierarchy)
         AND u.reporting_person_id IS NOT NULL
     ),
-
+ 
     reverse_hierarchy_with_comms AS (
         SELECT
             rh.id,
@@ -213,34 +221,41 @@ BEGIN
             ORDER BY c2.date DESC NULLS LAST
             LIMIT 1
             )::text AS link,
-            (ARRAY_REMOVE(ARRAY_AGG(DISTINCT tg.tag), NULL))::text[] AS tags
+            (
+                SELECT ARRAY_REMOVE(ARRAY_AGG(DISTINCT tg.tag), NULL)::text[]
+                FROM cip_schema.tags tg
+                WHERE tg.user_id = rh.id
+            ) AS tags
         FROM reverse_hierarchy rh
-        LEFT JOIN cip_schema.communications cm 
-            ON cm.user_id = rh.id 
+        LEFT JOIN cip_schema.communications cm
+            ON cm.user_id = rh.id
             AND cm.is_deleted = false
-        LEFT JOIN cip_schema.tags tg
-            ON tg.user_id = rh.id
-        GROUP BY 
+        GROUP BY
             rh.id, rh.full_name, rh.email, rh.reporting_person_id,
             rh.reporting_person_name, rh.designation_id, rh.designation_name,
             rh.is_active, rh.experience_years, rh.medium_of_education
         HAVING
-            (
-                tags_filter IS NULL
-                OR (ARRAY_REMOVE(ARRAY_AGG(DISTINCT tg.tag), NULL) && tags_filter)
-            )
+            tags_filter IS NULL
+            OR (
+                (
+                    SELECT ARRAY_AGG(DISTINCT tg.tag)
+                    FROM cip_schema.tags tg
+                    WHERE tg.user_id = rh.id
+                )::text[] && tags_filter
+              )
+            
     ),
-
+ 
     combined_hierarchy AS (
         SELECT * FROM filtered_forward_hierarchy
         UNION
         SELECT * FROM reverse_hierarchy_with_comms
     ),
-
+ 
     total AS (
         SELECT COUNT(*)::bigint AS cnt FROM combined_hierarchy
     )
-
+ 
     SELECT
         t.cnt AS total_count,
         ch.id AS user_id,
@@ -253,7 +268,7 @@ BEGIN
         ch.medium_of_education::text,
         ch.last_communication_date,
         ch.link,
-        ch.tags
+        ch.tags::text[]
     FROM combined_hierarchy ch
     CROSS JOIN total t
     ORDER BY
