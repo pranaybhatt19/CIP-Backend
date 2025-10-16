@@ -1,24 +1,25 @@
 DROP FUNCTION IF EXISTS cip_schema.get_user_tree_hierarchy(
-    integer, text,text[], integer[], integer[], text, numeric, text, numeric, timestamp,timestamp,timestamp,integer, integer, text, text
+    integer, text,text[], integer[], integer[], text, numeric, text, numeric, timestamp,timestamp,timestamp,integer, integer, text, text, text[]
 );
 
 CREATE FUNCTION cip_schema.get_user_tree_hierarchy(
-root_user_id integer,
-name_filter text,
-education_medium text[],
-designation_ids integer[],
-reporting_person_ids integer[],
-experience_type text,
-experience_value numeric,
-attempts_type text,
-attempts_value numeric,
-last_comm_exact timestamp,
-last_comm_from timestamp,
-last_comm_to timestamp,
-limit_val integer,
-offset_val integer,
-order_field text,
-order_direction text
+    root_user_id integer,
+    name_filter text,
+    education_medium text[],
+    designation_ids integer[],
+    reporting_person_ids integer[],
+    experience_type text,
+    experience_value numeric,
+    attempts_type text,
+    attempts_value numeric,
+    last_comm_exact timestamp,
+    last_comm_from timestamp,
+    last_comm_to timestamp,
+    limit_val integer,
+    offset_val integer,
+    order_field text,
+    order_direction text,
+    tags_filter text[]
 )
 RETURNS TABLE(
     total_count bigint,
@@ -31,7 +32,8 @@ RETURNS TABLE(
     attempts_count bigint,
     medium_of_education text,
     last_communication_date timestamp,
-    link text
+    link text,
+    tags text[]
 )
 LANGUAGE plpgsql
 AS $$
@@ -95,11 +97,14 @@ BEGIN
             WHERE c2.user_id = fh.id AND c2.is_deleted = false
             ORDER BY c2.date DESC NULLS LAST
             LIMIT 1
-            )::text AS link
+            )::text AS link,
+            (ARRAY_REMOVE(ARRAY_AGG(DISTINCT tg.tag), NULL))::text[] AS tags
         FROM forward_hierarchy fh
         LEFT JOIN cip_schema.communications cm 
             ON cm.user_id = fh.id 
             AND cm.is_deleted = false
+        LEFT JOIN cip_schema.tags tg
+            ON tg.user_id = fh.id
         WHERE
             fh.is_active = true
             AND (name_filter IS NULL OR fh.full_name ILIKE '%' || name_filter || '%')
@@ -135,6 +140,10 @@ BEGIN
                 AND MAX(cm.date) BETWEEN last_comm_from AND NOW())
             OR (last_comm_from IS NULL AND last_comm_to IS NOT NULL
                 AND MAX(cm.date) <= last_comm_to)
+            )
+            AND (
+                tags_filter IS NULL
+                OR (ARRAY_REMOVE(ARRAY_AGG(DISTINCT tg.tag), NULL) && tags_filter)
             )
     ),
 
@@ -203,15 +212,23 @@ BEGIN
             WHERE c2.user_id = rh.id AND c2.is_deleted = false
             ORDER BY c2.date DESC NULLS LAST
             LIMIT 1
-            )::text AS link
+            )::text AS link,
+            (ARRAY_REMOVE(ARRAY_AGG(DISTINCT tg.tag), NULL))::text[] AS tags
         FROM reverse_hierarchy rh
         LEFT JOIN cip_schema.communications cm 
             ON cm.user_id = rh.id 
             AND cm.is_deleted = false
+        LEFT JOIN cip_schema.tags tg
+            ON tg.user_id = rh.id
         GROUP BY 
             rh.id, rh.full_name, rh.email, rh.reporting_person_id,
             rh.reporting_person_name, rh.designation_id, rh.designation_name,
             rh.is_active, rh.experience_years, rh.medium_of_education
+        HAVING
+            (
+                tags_filter IS NULL
+                OR (ARRAY_REMOVE(ARRAY_AGG(DISTINCT tg.tag), NULL) && tags_filter)
+            )
     ),
 
     combined_hierarchy AS (
@@ -235,7 +252,8 @@ BEGIN
         ch.attempts_count,
         ch.medium_of_education::text,
         ch.last_communication_date,
-        ch.link
+        ch.link,
+        ch.tags
     FROM combined_hierarchy ch
     CROSS JOIN total t
     ORDER BY

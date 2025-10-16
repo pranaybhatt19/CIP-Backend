@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class UpdateUserHirerarchy1760589973883 implements MigrationInterface {
-    name = 'UpdateUserHirerarchy1760589973883'
+export class UpdateUserHirerarchy1760592699228 implements MigrationInterface {
+    name = 'UpdateUserHirerarchy1760592699228'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
@@ -9,7 +9,7 @@ export class UpdateUserHirerarchy1760589973883 implements MigrationInterface {
                 integer, text, text[], integer[], integer[], text, numeric, text, numeric, timestamp, timestamp, timestamp, integer, integer, text, text
             );
             
-            CREATE FUNCTION cip_schema.get_user_hierarchy1(
+            CREATE FUNCTION cip_schema.get_user_hierarchy(
                 root_user_id integer,
                 name_filter text,
                 education_medium text[],
@@ -182,6 +182,7 @@ export class UpdateUserHirerarchy1760589973883 implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`ALTER TABLE "cip_schema"."tags" DROP CONSTRAINT "FK_74603743868d1e4f4fc2c0225b6"`);
     }
 
 }
