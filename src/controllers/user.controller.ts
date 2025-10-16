@@ -10,6 +10,8 @@ import {
   registerUser,
   getUserCompleteDetails,
   getMediumDetails,
+  addTags,
+  getExistingTags,
 } from "../services/user.service";
 
 const registerNewUser = async (req: Request, res: Response) => {
@@ -52,6 +54,14 @@ const getUsersMedium = async (req: Request, res: Response) => {
   return await getMediumDetails(req, res);
 }
 
+const addUserTags = async (req: Request, res: Response) => {
+  return await addTags(req, res);
+}
+
+const getTags = async (req: Request, res: Response) => {
+  return await getExistingTags(req, res);
+}
+
 export {
   registerNewUser,
   getReportingPersons,
@@ -63,4 +73,6 @@ export {
   deletePractice,
   getUsersDetails,
   getUsersMedium,
+  addUserTags,
+  getTags,
 };

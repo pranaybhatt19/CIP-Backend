@@ -10,11 +10,14 @@ import {
   registerNewUser,
   getUsersDetails,
   getUsersMedium,
+  addUserTags,
+  getTags,
 } from "../controllers/user.controller";
 import dtoValidation from "../middlewares/dto-validation.middleware";
-import { AddPracticeDto, UpdateUserDto } from "../dto";
+import { AddNewUserDto, AddPracticeDto, UpdateUserDto } from "../dto";
 import { celebrate } from "celebrate";
 import { searchUsersSchema } from "../utils/validation-schema/search-users.validation";
+import { AddUserTags } from "../dto/auth/add-user-tags.dto";
 
 const userRouter = Router();
 
@@ -23,10 +26,11 @@ userRouter.get("/get-designations", getDesignations);
 userRouter.get("/get-reporting-persons", getReportingPersons);
 userRouter.get("/get-user-details/:id", getUsersDetails);
 userRouter.get("/get-user-medium", getUsersMedium);
+userRouter.get("/get-tags", getTags);
 
 
 // POST Requests
-userRouter.post("/register", registerNewUser);
+userRouter.post("/register", dtoValidation(AddNewUserDto), registerNewUser);
 userRouter.post("/add-practice", dtoValidation(AddPracticeDto), addPractice);
 userRouter.post(
   "/update-user-details",
@@ -35,6 +39,7 @@ userRouter.post(
 );
 userRouter.post("/searchUsers", celebrate(searchUsersSchema), searchUsers);
 userRouter.post("/user-practices", getUsersPracticeDetails);
+userRouter.post('/add-user-tags', dtoValidation(AddUserTags), addUserTags);
 
 
 // PATCH Requests

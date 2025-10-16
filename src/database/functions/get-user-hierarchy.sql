@@ -1,44 +1,15 @@
 DROP FUNCTION IF EXISTS cip_schema.get_user_hierarchy(
     integer, text, text[], integer[], integer[], text, numeric, text, numeric, timestamp, timestamp, timestamp, integer, integer, text, text
 );
-
-CREATE FUNCTION cip_schema.get_user_hierarchy(
-root_user_id integer,
-name_filter text,
-education_medium text[],
-designation_ids integer[],
-reporting_person_ids integer[],
-experience_type text,
-experience_value numeric,
-attempts_type text,
-attempts_value numeric,
-last_comm_exact timestamp,
-last_comm_from timestamp,
-last_comm_to timestamp,
-limit_val integer,
-offset_val integer,
-order_field text,
-order_direction text
-)
-RETURNS TABLE(
-    total_count bigint,
-    user_id integer,
-    full_name text,
-    email text,
-    reporting_person json,
-    designation json,
-    experience_years numeric,
-    attempts_count bigint,
-    medium_of_education text,
-    last_communication_date timestamp,
-    link text
-)
-LANGUAGE plpgsql
-AS $$
+ 
+CREATE OR REPLACE FUNCTION cip_schema.get_user_hierarchy(root_user_id integer, name_filter text, education_medium text[], designation_ids integer[], reporting_person_ids integer[], experience_type text, experience_value numeric, attempts_type text, attempts_value numeric, last_comm_exact timestamp without time zone, last_comm_from timestamp without time zone, last_comm_to timestamp without time zone, limit_val integer, offset_val integer, order_field text, order_direction text, tags_filter text[])
+ RETURNS TABLE(total_count bigint, user_id integer, full_name text, email text, reporting_person json, designation json, experience_years numeric, attempts_count bigint, medium_of_education text, last_communication_date timestamp without time zone, link text, tags text[])
+ LANGUAGE plpgsql
+AS $function$
 BEGIN
     RETURN QUERY
     WITH RECURSIVE user_hierarchy AS (
-        SELECT 
+        SELECT
             u.id,
             u.full_name::text,
             u.email::text,
@@ -48,7 +19,7 @@ BEGIN
             d.name::text AS designation_name,
             u.medium_of_education::text,
             u.is_active,
-            (DATE_PART('year', AGE(NOW(), u.experience)) 
+            (DATE_PART('year', AGE(NOW(), u.experience))
                 + DATE_PART('month', AGE(NOW(), u.experience)) / 100)::numeric AS experience_years
         FROM cip_schema.users u
         LEFT JOIN cip_schema.users rp ON rp.id = u.reporting_person_id
@@ -67,7 +38,7 @@ BEGIN
             d.name::text AS designation_name,
             u.medium_of_education::text,
             u.is_active,
-            (DATE_PART('year', AGE(NOW(), u.experience)) 
+            (DATE_PART('year', AGE(NOW(), u.experience))
                 + DATE_PART('month', AGE(NOW(), u.experience)) / 100)::numeric AS experience_years
         FROM cip_schema.users u
         INNER JOIN user_hierarchy h ON u.reporting_person_id = h.id
@@ -76,25 +47,31 @@ BEGIN
     ),
 
     user_with_comms AS (
-        SELECT
+            SELECT
             uh.*,
             COALESCE(COUNT(cm.user_id), 0)::bigint AS attempts_count,
             MAX(cm.date)::timestamp AS last_communication_date,
             (
-            SELECT c2.link
-            FROM cip_schema.communications c2
-            WHERE c2.user_id = uh.id AND c2.is_deleted = false
-            ORDER BY c2.date DESC NULLS LAST
-            LIMIT 1
-            )::text AS link
-        FROM user_hierarchy uh
-        LEFT JOIN cip_schema.communications cm ON cm.user_id = uh.id AND cm.is_deleted = false
-        GROUP BY 
+                SELECT c2.link
+                FROM cip_schema.communications c2
+                WHERE c2.user_id = uh.id AND c2.is_deleted = false
+                ORDER BY c2.date DESC NULLS LAST
+                LIMIT 1
+            )::text AS link,
+            (
+                SELECT ARRAY_REMOVE(ARRAY_AGG(DISTINCT tg.tag), NULL)::text[]
+                FROM cip_schema.tags tg
+                WHERE tg.user_id = uh.id
+            ) AS tags
+            FROM user_hierarchy uh
+            LEFT JOIN cip_schema.communications cm
+            ON cm.user_id = uh.id AND cm.is_deleted = false
+            GROUP BY
             uh.id, uh.full_name, uh.email, uh.reporting_person_id,
             uh.reporting_person_name, uh.designation_id, uh.designation_name,
             uh.is_active, uh.experience_years, uh.medium_of_education
     ),
-
+        
     filtered_hierarchy AS (
         SELECT *
         FROM user_with_comms uh
@@ -115,19 +92,24 @@ BEGIN
                 (attempts_type = 'EQUALS' AND uh.attempts_count = attempts_value)
             )
             AND (
-            (last_comm_exact IS NULL AND last_comm_from IS NULL AND last_comm_to IS NULL)
-            OR (last_comm_exact IS NOT NULL AND DATE(uh.last_communication_date) = DATE(last_comm_exact))
-            OR (last_comm_from IS NOT NULL AND last_comm_to IS NOT NULL
-                AND uh.last_communication_date BETWEEN last_comm_from AND last_comm_to)
-            OR (last_comm_from IS NOT NULL AND last_comm_to IS NULL
-                AND uh.last_communication_date BETWEEN last_comm_from AND NOW())
-            OR (last_comm_from IS NULL AND last_comm_to IS NOT NULL
-                AND uh.last_communication_date <= last_comm_to)
+                (last_comm_exact IS NULL AND last_comm_from IS NULL AND last_comm_to IS NULL)
+                OR (last_comm_exact IS NOT NULL AND DATE(uh.last_communication_date) = DATE(last_comm_exact))
+                OR (last_comm_from IS NOT NULL AND last_comm_to IS NOT NULL
+                    AND uh.last_communication_date BETWEEN last_comm_from AND last_comm_to)
+                OR (last_comm_from IS NOT NULL AND last_comm_to IS NULL
+                    AND uh.last_communication_date BETWEEN last_comm_from AND NOW())
+                OR (last_comm_from IS NULL AND last_comm_to IS NOT NULL
+                    AND uh.last_communication_date <= last_comm_to)
             )
             AND (education_medium IS NULL OR uh.medium_of_education = ANY(education_medium))
-            AND uh.is_active = true 
-            AND uh.reporting_person_id IS NOT NULL
-            OR (uh.id = root_user_id AND uh.reporting_person_id IS NOT NULL)
+            AND uh.is_active = true
+            AND (
+                uh.reporting_person_id IS NOT NULL
+                OR uh.id = root_user_id
+            )
+            AND (tags_filter IS NULL OR EXISTS (
+                SELECT 1 FROM unnest(uh.tags) t(tag) WHERE tag = ANY(tags_filter)
+            ))
     )
     SELECT
         (SELECT COUNT(*) FROM filtered_hierarchy) AS total_count,
@@ -140,7 +122,8 @@ BEGIN
         fh.attempts_count,
         fh.medium_of_education::text,
         fh.last_communication_date,
-        fh.link
+        fh.link,
+        fh.tags
     FROM filtered_hierarchy fh
     ORDER BY
         CASE WHEN order_field = 'full_name' AND order_direction = 'ASC' THEN fh.full_name END ASC NULLS LAST,
@@ -160,4 +143,4 @@ BEGIN
     LIMIT limit_val
     OFFSET offset_val;
 END;
-$$;
+$function$;
