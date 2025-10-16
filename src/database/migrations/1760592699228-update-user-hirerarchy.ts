@@ -9,6 +9,10 @@ export class UpdateUserHirerarchy1760592699228 implements MigrationInterface {
                 integer, text, text[], integer[], integer[], text, numeric, text, numeric, timestamp, timestamp, timestamp, integer, integer, text, text
             );
             
+            CREATE OR REPLACE FUNCTION cip_schema.get_user_hierarchy(root_user_id integer, name_filter text, education_medium text[], designation_ids integer[], reporting_person_ids integer[], experience_type text, experience_value numeric, attempts_type text, attempts_value numeric, last_comm_exact timestamp without time zone, last_comm_from timestamp without time zone, last_comm_to timestamp without time zone, limit_val integer, offset_val integer, order_field text, order_direction text, tags_filter text[])
+            RETURNS TABLE(total_count bigint, user_id integer, full_name text, email text, reporting_person json, designation json, experience_years numeric, attempts_count bigint, medium_of_education text, last_communication_date timestamp without time zone, link text, tags text[])
+            LANGUAGE plpgsql
+            AS $function$
             BEGIN
             RETURN QUERY
             WITH RECURSIVE user_hierarchy AS (

@@ -11,7 +11,7 @@ export class UpdateUserTreeHirerarchy1760593155201
             integer, text,text[], integer[], integer[], text, numeric, text, numeric, timestamp,timestamp,timestamp,integer, integer, text, text
             );
         
-            CREATE FUNCTION cip_schema.get_user_tree_hierarchy(
+            CREATE OR REPLACE FUNCTION cip_schema.get_user_tree_hierarchy(
             root_user_id integer,
             name_filter text,
             education_medium text[],
