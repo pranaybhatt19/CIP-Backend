@@ -23,7 +23,7 @@ const registerUser = async (req: Request, res: Response): Promise<any> => {
     designation,
     experience,
     reportingPerson,
-  }: AddNewUserDto = req.body;
+  } = req.body;
 
   try {
     const existingUser: User | null = await userRepository.findOne({
@@ -790,6 +790,8 @@ const saveUserTags = async (user: User, tags: []): Promise<ISavedResponse> => {
     await tagsRepository.delete({
       user: { id: user.id },
     });
+
+    // Check same tag name not me eligible
 
     const toSave = tags.map((tag: string) =>
       tagsRepository.create({

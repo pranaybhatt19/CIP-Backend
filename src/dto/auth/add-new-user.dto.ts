@@ -1,4 +1,5 @@
-import { IsString, MinLength, IsEmail, IsNumber, IsDate } from "class-validator";
+import { IsString, MinLength, IsEmail, IsNumber, IsDate, IsTimeZone, IsDateString } from "class-validator";
+import { Timestamp } from "typeorm";
 
 export class AddNewUserDto {
     @IsString()
@@ -16,7 +17,7 @@ export class AddNewUserDto {
     @IsEmail()
     email!: string;
 
-    @IsDate()
+    @IsDateString()
     experience!: Date;
 
     @IsNumber()

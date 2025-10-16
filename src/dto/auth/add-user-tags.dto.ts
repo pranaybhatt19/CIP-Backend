@@ -1,4 +1,4 @@
-import { IsArray, IsNumber } from "class-validator";
+import { IsArray, IsNumber, Matches } from "class-validator";
 
 
 export class AddUserTags {
@@ -7,6 +7,10 @@ export class AddUserTags {
     id!: number;
 
     @IsArray()
+    @Matches(/^[a-z]+$/, {
+        each: true,
+        message: 'Each tag must contain only lowercase letters.'
+    })
     tags!: string[];
 
 }
