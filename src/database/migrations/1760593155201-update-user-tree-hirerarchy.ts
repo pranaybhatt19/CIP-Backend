@@ -107,13 +107,15 @@ export class UpdateUserTreeHirerarchy1760593155201
                         ORDER BY c2.date DESC NULLS LAST
                         LIMIT 1
                         )::text AS link,
-                        (ARRAY_REMOVE(ARRAY_AGG(DISTINCT tg.tag), NULL))::text[] AS tags
+                        (
+                        SELECT ARRAY_AGG(DISTINCT tg.tag)
+                        FROM cip_schema.tags tg
+                        WHERE tg.user_id = fh.id
+                        )::text[] AS tags
                     FROM forward_hierarchy fh
                     LEFT JOIN cip_schema.communications cm
                         ON cm.user_id = fh.id
                         AND cm.is_deleted = false
-                    LEFT JOIN cip_schema.tags tg
-                        ON tg.user_id = fh.id
                     WHERE
                         fh.is_active = true
                         AND (name_filter IS NULL OR fh.full_name ILIKE '%' || name_filter || '%')
@@ -151,8 +153,14 @@ export class UpdateUserTreeHirerarchy1760593155201
                             AND MAX(cm.date) <= last_comm_to)
                         )
                         AND (
-                            tags_filter IS NULL
-                            OR ((ARRAY_REMOVE(ARRAY_AGG(DISTINCT tg.tag), NULL))::text[] && tags_filter)
+                        tags_filter IS NULL
+                        OR (
+                            (
+                                SELECT ARRAY_AGG(DISTINCT tg.tag)
+                                FROM cip_schema.tags tg
+                                WHERE tg.user_id = fh.id
+                            )::text[] && tags_filter
+                        )
                         )
                 ),
             
@@ -222,22 +230,29 @@ export class UpdateUserTreeHirerarchy1760593155201
                         ORDER BY c2.date DESC NULLS LAST
                         LIMIT 1
                         )::text AS link,
-                        (ARRAY_REMOVE(ARRAY_AGG(DISTINCT tg.tag), NULL))::text[] AS tags
+                        (
+                            SELECT ARRAY_REMOVE(ARRAY_AGG(DISTINCT tg.tag), NULL)::text[]
+                            FROM cip_schema.tags tg
+                            WHERE tg.user_id = rh.id
+                        ) AS tags
                     FROM reverse_hierarchy rh
                     LEFT JOIN cip_schema.communications cm
                         ON cm.user_id = rh.id
                         AND cm.is_deleted = false
-                    LEFT JOIN cip_schema.tags tg
-                        ON tg.user_id = rh.id
                     GROUP BY
                         rh.id, rh.full_name, rh.email, rh.reporting_person_id,
                         rh.reporting_person_name, rh.designation_id, rh.designation_name,
                         rh.is_active, rh.experience_years, rh.medium_of_education
                     HAVING
-                        (
-                            tags_filter IS NULL
-                            OR ((ARRAY_REMOVE(ARRAY_AGG(DISTINCT tg.tag), NULL))::text[] && tags_filter)
+                        tags_filter IS NULL
+                        OR (
+                            (
+                                SELECT ARRAY_AGG(DISTINCT tg.tag)
+                                FROM cip_schema.tags tg
+                                WHERE tg.user_id = rh.id
+                            )::text[] && tags_filter
                         )
+                        
                 ),
             
                 combined_hierarchy AS (
@@ -287,5 +302,5 @@ export class UpdateUserTreeHirerarchy1760593155201
          `);
   }
 
-  public async down(queryRunner: QueryRunner): Promise<void> {}
+  public async down(): Promise<void> {}
 }

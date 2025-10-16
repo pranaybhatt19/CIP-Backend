@@ -2,41 +2,10 @@ DROP FUNCTION IF EXISTS cip_schema.get_user_hierarchy(
     integer, text, text[], integer[], integer[], text, numeric, text, numeric, timestamp, timestamp, timestamp, integer, integer, text, text
 );
  
-CREATE FUNCTION cip_schema.get_user_hierarchy(
-    root_user_id integer,
-    name_filter text,
-    education_medium text[],
-    designation_ids integer[],
-    reporting_person_ids integer[],
-    experience_type text,
-    experience_value numeric,
-    attempts_type text,
-    attempts_value numeric,
-    last_comm_exact timestamp,
-    last_comm_from timestamp,
-    last_comm_to timestamp,
-    limit_val integer,
-    offset_val integer,
-    order_field text,
-    order_direction text,
-    tags_filter text[]
-)
-RETURNS TABLE(
-    total_count bigint,
-    user_id integer,
-    full_name text,
-    email text,
-    reporting_person json,
-    designation json,
-    experience_years numeric,
-    attempts_count bigint,
-    medium_of_education text,
-    last_communication_date timestamp,
-    link text,
-    tags text[]
-)
-LANGUAGE plpgsql
-AS $$
+CREATE OR REPLACE FUNCTION cip_schema.get_user_hierarchy(root_user_id integer, name_filter text, education_medium text[], designation_ids integer[], reporting_person_ids integer[], experience_type text, experience_value numeric, attempts_type text, attempts_value numeric, last_comm_exact timestamp without time zone, last_comm_from timestamp without time zone, last_comm_to timestamp without time zone, limit_val integer, offset_val integer, order_field text, order_direction text, tags_filter text[])
+ RETURNS TABLE(total_count bigint, user_id integer, full_name text, email text, reporting_person json, designation json, experience_years numeric, attempts_count bigint, medium_of_education text, last_communication_date timestamp without time zone, link text, tags text[])
+ LANGUAGE plpgsql
+AS $function$
 BEGIN
     RETURN QUERY
     WITH RECURSIVE user_hierarchy AS (
@@ -56,9 +25,9 @@ BEGIN
         LEFT JOIN cip_schema.users rp ON rp.id = u.reporting_person_id
         LEFT JOIN cip_schema.designations d ON d.id = u.designation_id
         WHERE u.id = root_user_id
- 
+
         UNION ALL
- 
+
         SELECT
             u.id,
             u.full_name::text,
@@ -76,9 +45,9 @@ BEGIN
         LEFT JOIN cip_schema.users rp ON rp.id = u.reporting_person_id
         LEFT JOIN cip_schema.designations d ON d.id = u.designation_id
     ),
- 
+
     user_with_comms AS (
-        SELECT
+            SELECT
             uh.*,
             COALESCE(COUNT(cm.user_id), 0)::bigint AS attempts_count,
             MAX(cm.date)::timestamp AS last_communication_date,
@@ -89,16 +58,20 @@ BEGIN
                 ORDER BY c2.date DESC NULLS LAST
                 LIMIT 1
             )::text AS link,
-            (ARRAY_REMOVE(ARRAY_AGG(DISTINCT tg.tag), NULL))::text[] AS tags
-        FROM user_hierarchy uh
-        LEFT JOIN cip_schema.communications cm ON cm.user_id = uh.id AND cm.is_deleted = false
-        LEFT JOIN cip_schema.tags tg ON tg.user_id = uh.id
-        GROUP BY
+            (
+                SELECT ARRAY_REMOVE(ARRAY_AGG(DISTINCT tg.tag), NULL)::text[]
+                FROM cip_schema.tags tg
+                WHERE tg.user_id = uh.id
+            ) AS tags
+            FROM user_hierarchy uh
+            LEFT JOIN cip_schema.communications cm
+            ON cm.user_id = uh.id AND cm.is_deleted = false
+            GROUP BY
             uh.id, uh.full_name, uh.email, uh.reporting_person_id,
             uh.reporting_person_name, uh.designation_id, uh.designation_name,
             uh.is_active, uh.experience_years, uh.medium_of_education
     ),
- 
+        
     filtered_hierarchy AS (
         SELECT *
         FROM user_with_comms uh
@@ -170,4 +143,4 @@ BEGIN
     LIMIT limit_val
     OFFSET offset_val;
 END;
-$$;
+$function$;
