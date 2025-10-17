@@ -23,7 +23,7 @@ const registerUser = async (req: Request, res: Response): Promise<any> => {
     designation,
     experience,
     reportingPerson,
-  }: AddNewUserDto = req.body;
+  } = req.body;
 
   try {
     const existingUser: User | null = await userRepository.findOne({
@@ -787,14 +787,28 @@ const saveUserTags = async (user: User, tags: []): Promise<ISavedResponse> => {
     status: false,
   };
   try {
+
+    const normalizedSet = new Set(
+      tags
+        .map((t) => String(t || "").trim().toLowerCase())
+        .filter((t) => t.length > 0)
+    );
+    
+    const normalizedTags = Array.from(normalizedSet);
+
+    if (normalizedTags.length === 0) {
+      response.message = "No valid tags to save after normalization";
+      return response;
+    }
+
     await tagsRepository.delete({
       user: { id: user.id },
     });
 
-    const toSave = tags.map((tag: string) =>
+    const toSave = normalizedTags.map((tag: string) =>
       tagsRepository.create({
         user: user,
-        tag: tag.toLowerCase().trim(),
+        tag: tag,
       })
     );
 
@@ -822,9 +836,7 @@ const getExistingTags = async (req: Request, res: Response): Promise<any> => {
     }
 
     const tagsPayload = tags.map(
-      (tagRecord: any) =>
-        String(tagRecord.tag).charAt(0).toUpperCase() +
-        String(tagRecord.tag).slice(1).toLowerCase()
+      (tagRecord: any) => tagRecord.tag
     );
 
     return res
