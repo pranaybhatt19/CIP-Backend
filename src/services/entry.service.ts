@@ -45,10 +45,12 @@ const loginUser = async (req: Request, res: Response): Promise<any> => {
       .leftJoinAndSelect("reportingPerson.designation", "roDesignation")
       .where("user.email = :email", { email: identity })
       .getOne();
-
     if (!userDetails) {
       return res.status(401).json({ message: "user not found" });
     }
+    const isEndUser = await userRepository.exists({
+      where: { reporting_person: { id: userDetails.id } },
+    });
 
     const verify = await bcrypt.compare(password, userDetails.password);
 
@@ -60,8 +62,6 @@ const loginUser = async (req: Request, res: Response): Promise<any> => {
       return res.status(403).json({ message: "User account is inactive" });
     }
 
-    const experience = calculateExperience(userDetails.experience);
-
     const tokenPayload: any = {
       sub: userDetails.id,
       email: userDetails.email,
@@ -72,10 +72,13 @@ const loginUser = async (req: Request, res: Response): Promise<any> => {
       },
       activeStatus: userDetails.is_active,
       mediumOfEducation: userDetails.medium_of_education,
-      reportingPerson: userDetails?.reporting_person ? {
-        id: userDetails?.reporting_person?.id,
-        name: userDetails?.reporting_person?.full_name,
-      } as any : null,
+      reportingPerson: userDetails?.reporting_person
+        ? ({
+            id: userDetails?.reporting_person?.id,
+            name: userDetails?.reporting_person?.full_name,
+          } as any)
+        : null,
+      isEndUser,
       // experience: experience,
       // reportingPerson: userDetails?.reporting_person ? {
       //  sub: userDetails?.reporting_person?.id,
@@ -292,11 +295,9 @@ const addMinutes = (date: Date, minutes: number): Date => {
 
 const refactorUserData = async (req: Request, res: Response): Promise<any> => {
   try {
-    const users: User[] = await userRepository
-      .createQueryBuilder()
-      .getMany();
-      
-      // .where("id = :id", { id: 82 })
+    const users: User[] = await userRepository.createQueryBuilder().getMany();
+
+    // .where("id = :id", { id: 82 })
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST || "smtp.gmail.com",
       port: Number(process.env.EMAIL_PORT),
