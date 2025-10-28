@@ -789,13 +789,16 @@ const saveUserTags = async (user: User, tags: []): Promise<ISavedResponse> => {
     status: false,
   };
   try {
-
     const normalizedSet = new Set(
       tags
-        .map((t) => String(t || "").trim().toLowerCase())
+        .map((t) =>
+          String(t || "")
+            .trim()
+            .toLowerCase()
+        )
         .filter((t) => t.length > 0)
     );
-    
+
     const normalizedTags = Array.from(normalizedSet);
 
     if (normalizedTags.length === 0) {
@@ -837,9 +840,7 @@ const getExistingTags = async (req: Request, res: Response): Promise<any> => {
       return res.status(200).json({ message: "No tags found" });
     }
 
-    const tagsPayload = tags.map(
-      (tagRecord: any) => tagRecord.tag
-    );
+    const tagsPayload = tags.map((tagRecord: any) => tagRecord.tag);
 
     return res
       .status(200)

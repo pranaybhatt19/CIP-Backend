@@ -1,10 +1,10 @@
 DROP FUNCTION IF EXISTS cip_schema.get_user_hierarchy(
-    integer, text, text[], integer[], integer[], text, numeric, text, numeric, timestamp, timestamp, timestamp, integer, integer, text, text
+    integer, text, text[], integer[], integer[], text, numeric, text, numeric, timestamp, timestamp, timestamp, integer, integer, text, text,text[]
 );
- 
-CREATE OR REPLACE FUNCTION cip_schema.get_user_hierarchy(root_user_id integer, name_filter text, education_medium text[], designation_ids integer[], reporting_person_ids integer[], experience_type text, experience_value numeric, attempts_type text, attempts_value numeric, last_comm_exact timestamp without time zone, last_comm_from timestamp without time zone, last_comm_to timestamp without time zone, limit_val integer, offset_val integer, order_field text, order_direction text, tags_filter text[], active_status boolean)
- RETURNS TABLE(total_count bigint, user_id integer, full_name text, email text, reporting_person json, designation json, experience_years numeric, attempts_count bigint, medium_of_education text, last_communication_date timestamp without time zone, link text, tags text[])
- LANGUAGE plpgsql
+
+CREATE OR REPLACE FUNCTION cip_schema.get_user_hierarchy(root_user_id integer, name_filter text, education_medium text[], designation_ids integer[], reporting_person_ids integer[], experience_type text, experience_value numeric, attempts_type text, attempts_value numeric, last_comm_exact timestamp without time zone, last_comm_from timestamp without time zone, last_comm_to timestamp without time zone, limit_val integer, offset_val integer, order_field text, order_direction text, tags_filter text[], _active_status boolean)
+RETURNS TABLE(total_count bigint, user_id integer, full_name text, email text, reporting_person json, designation json, experience_years numeric, attempts_count bigint, medium_of_education text, last_communication_date timestamp without time zone, link text, tags text[],active_status boolean)
+LANGUAGE plpgsql
 AS $function$
 BEGIN
     RETURN QUERY
@@ -103,8 +103,7 @@ BEGIN
             )
             AND (education_medium IS NULL OR uh.medium_of_education = ANY(education_medium))
             AND (
-                (active_status IS NULL AND uh.is_active = true)
-                OR (active_status IS NOT NULL AND uh.is_active = active_status)
+                _active_status IS NULL OR uh.is_active = _active_status
             )
             AND (
                 uh.reporting_person_id IS NOT NULL
@@ -126,7 +125,8 @@ BEGIN
         fh.medium_of_education::text,
         fh.last_communication_date,
         fh.link,
-        fh.tags
+        fh.tags,
+        fh.is_active AS active_status
     FROM filtered_hierarchy fh
     ORDER BY
         CASE WHEN order_field = 'full_name' AND order_direction = 'ASC' THEN fh.full_name END ASC NULLS LAST,
