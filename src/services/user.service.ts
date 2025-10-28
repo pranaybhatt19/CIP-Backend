@@ -520,6 +520,7 @@ const searchUsersFilter = async (
       offset,
       order,
       isTreeView,
+      active_status,
     } = req.body;
 
     const designationIds = rawDesignationIds?.length ? rawDesignationIds : null;
@@ -545,11 +546,12 @@ const searchUsersFilter = async (
       order?.[0]?.[0] ?? "full_name",
       order?.[0]?.[1] ?? "ASC",
       tags_filter,
+      active_status,
     ];
     const functionName = isTreeView
       ? "get_user_tree_hierarchy"
       : "get_user_hierarchy";
-    const sql = `SELECT * FROM cip_schema.${functionName}($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`;
+    const sql = `SELECT * FROM cip_schema.${functionName}($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)`;
 
     const rows = await AppDataSource.manager.query(sql, values);
     if (!isTreeView) {
@@ -787,13 +789,16 @@ const saveUserTags = async (user: User, tags: []): Promise<ISavedResponse> => {
     status: false,
   };
   try {
-
     const normalizedSet = new Set(
       tags
-        .map((t) => String(t || "").trim().toLowerCase())
+        .map((t) =>
+          String(t || "")
+            .trim()
+            .toLowerCase()
+        )
         .filter((t) => t.length > 0)
     );
-    
+
     const normalizedTags = Array.from(normalizedSet);
 
     if (normalizedTags.length === 0) {
@@ -835,9 +840,7 @@ const getExistingTags = async (req: Request, res: Response): Promise<any> => {
       return res.status(200).json({ message: "No tags found" });
     }
 
-    const tagsPayload = tags.map(
-      (tagRecord: any) => tagRecord.tag
-    );
+    const tagsPayload = tags.map((tagRecord: any) => tagRecord.tag);
 
     return res
       .status(200)

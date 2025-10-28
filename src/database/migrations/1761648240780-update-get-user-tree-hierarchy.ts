@@ -1,8 +1,17 @@
-DROP FUNCTION IF EXISTS cip_schema.get_user_tree_hierarchy(
-    integer, text,text[], integer[], integer[], text, numeric, text, numeric, timestamp,timestamp,timestamp,integer, integer, text, text, text[]
-);
+import { MigrationInterface, QueryRunner } from "typeorm";
 
-CREATE FUNCTION cip_schema.get_user_tree_hierarchy(
+export class UpdateGetUserTreeHierarchy1761648240780
+  implements MigrationInterface
+{
+  name = "UpdateGetUserTreeHierarchy1761648240780";
+
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
+        DROP FUNCTION IF EXISTS cip_schema.get_user_tree_hierarchy(
+        integer, text,text[], integer[], integer[], text, numeric, text, numeric, timestamp,timestamp,timestamp,integer, integer, text, text,text[]
+        );
+    
+        CREATE FUNCTION cip_schema.get_user_tree_hierarchy(
         root_user_id integer,
         name_filter text,
         education_medium text[],
@@ -301,3 +310,8 @@ CREATE FUNCTION cip_schema.get_user_tree_hierarchy(
             OFFSET offset_val;
         END;
         $$;
+     `);
+  }
+
+  public async down(): Promise<void> {}
+}

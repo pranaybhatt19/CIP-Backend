@@ -85,15 +85,15 @@ export const searchUsersSchema = {
       }),
 
     tags_filter: Joi.array()
-    .items(
-      Joi.string().messages({
-        "string.base": "Each tag must be a string",
-      })
-    )
-    .optional()
-    .messages({
-      "array.base": "Tags must be an array of tag",
-    }),
+      .items(
+        Joi.string().messages({
+          "string.base": "Each tag must be a string",
+        })
+      )
+      .optional()
+      .messages({
+        "array.base": "Tags must be an array of tag",
+      }),
 
     experience: experienceFilterSchema.optional(),
     education_medium: Joi.array()
@@ -130,7 +130,9 @@ export const searchUsersSchema = {
     isTreeView: Joi.boolean().optional().messages({
       "boolean.base": "Tree view flag must be true or false",
     }),
-
+    active_status: Joi.boolean().optional().allow(null).messages({
+      "boolean.base": "Active status flag must be true or false",
+    }),
     limit: Joi.number().integer().positive().optional().messages({
       "number.base": "Limit must be a number",
       "number.integer": "Limit must be an integer",
