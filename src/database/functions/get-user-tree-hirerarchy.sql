@@ -19,7 +19,8 @@ CREATE FUNCTION cip_schema.get_user_tree_hierarchy(
     offset_val integer,
     order_field text,
     order_direction text,
-    tags_filter text[]
+    tags_filter text[],
+    active_status boolean
 )
 RETURNS TABLE(
     total_count bigint,
@@ -108,7 +109,10 @@ BEGIN
             ON cm.user_id = fh.id
             AND cm.is_deleted = false
         WHERE
-            fh.is_active = true
+            (
+                (active_status IS NULL AND fh.is_active = true)
+                OR (active_status IS NOT NULL AND fh.is_active = active_status)
+            )
             AND (name_filter IS NULL OR fh.full_name ILIKE '%' || name_filter || '%')
             AND (designation_ids IS NULL OR fh.designation_id = ANY(designation_ids))
             AND (reporting_person_ids IS NULL OR fh.reporting_person_id = ANY(reporting_person_ids))
@@ -230,6 +234,11 @@ BEGIN
         LEFT JOIN cip_schema.communications cm
             ON cm.user_id = rh.id
             AND cm.is_deleted = false
+        WHERE
+            (
+                (active_status IS NULL AND rh.is_active = true)
+                OR (active_status IS NOT NULL AND rh.is_active = active_status)
+            )
         GROUP BY
             rh.id, rh.full_name, rh.email, rh.reporting_person_id,
             rh.reporting_person_name, rh.designation_id, rh.designation_name,
