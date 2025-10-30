@@ -18,5 +18,27 @@ export class UpdateUserDto {
     @IsOptional()
     @IsBoolean()
     status?: boolean;
+
+    @IsOptional()
+    @IsNumber()
+    designation!: number;
+
+    @IsOptional()
+    @IsNumber()
+    reportingPerson!: number;
   
+    @IsOptional()
+    @IsString()
+    @MinLength(2)
+    firstName!: string;
+
+    @IsOptional()
+    @IsString()
+    @MinLength(2)
+    middleName!: string;
+
+    @IsOptional()
+    @IsString()
+    @MinLength(2)
+    lastName!: string;
 }

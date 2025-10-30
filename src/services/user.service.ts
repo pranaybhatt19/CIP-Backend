@@ -92,7 +92,17 @@ const registerUser = async (req: Request, res: Response): Promise<any> => {
 
 const updateUserDetails = async (req: Request, res: Response): Promise<any> => {
   try {
-    const { id, password, educationLanguage, status } = req.body;
+    const { 
+      id, 
+      password, 
+      educationLanguage, 
+      status, 
+      designation, 
+      reportingPerson,
+      firstName,
+      middleName,
+      lastName,
+     } = req.body;
 
     if (!id) {
       return res
@@ -130,6 +140,35 @@ const updateUserDetails = async (req: Request, res: Response): Promise<any> => {
       user.medium_of_education = lowerStringFormate;
     }
 
+    if(designation){
+      user.designation = designation;
+    }
+
+    if(reportingPerson){
+      user.reporting_person = reportingPerson;
+    }
+
+    let isNameChanged: boolean = false;
+
+    if(firstName){
+      user.first_name = firstName;
+      isNameChanged = true;
+    }
+
+    if(middleName){
+      user.middle_name = middleName;
+      isNameChanged = true;
+    }
+
+    if(lastName){
+      user.last_name = lastName;
+      isNameChanged = true;
+    }
+
+    if(isNameChanged){
+      user.full_name = `${firstName ? firstName : user.first_name} ${middleName ? middleName : user.middle_name} ${lastName ? lastName : user.last_name}`;
+    }
+    
     user.updated_at = new Date();
     const savedUser = await userRepository.save(user);
 
