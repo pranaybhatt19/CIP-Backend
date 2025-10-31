@@ -1,9 +1,9 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class UpdateGetUserTreeHierarchy1761648240780
+export class UpdateGetUserTreeHierarchy1761648240783
   implements MigrationInterface
 {
-  name = "UpdateGetUserTreeHierarchy1761648240780";
+  name = "UpdateGetUserTreeHierarchy1761648240783";
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
@@ -35,6 +35,9 @@ export class UpdateGetUserTreeHierarchy1761648240780
             total_count bigint,
             user_id integer,
             full_name text,
+            first_name text,
+            middle_name text,
+            last_name text,
             email text,
             reporting_person json,
             designation json,
@@ -55,6 +58,9 @@ export class UpdateGetUserTreeHierarchy1761648240780
                 SELECT
                     u.id,
                     u.full_name::text,
+                    u.first_name::text,
+                    u.middle_name::text,
+                    u.last_name::text,
                     u.email::text,
                     u.reporting_person_id,
                     rp.full_name::text AS reporting_person_name,
@@ -74,6 +80,9 @@ export class UpdateGetUserTreeHierarchy1761648240780
                 SELECT
                     u.id,
                     u.full_name::text,
+                    u.first_name::text,
+                    u.middle_name::text,
+                    u.last_name::text,
                     u.email::text,
                     u.reporting_person_id,
                     rp.full_name::text AS reporting_person_name,
@@ -93,6 +102,9 @@ export class UpdateGetUserTreeHierarchy1761648240780
                 SELECT
                     fh.id,
                     fh.full_name,
+                    fh.first_name,
+                    fh.middle_name,
+                    fh.last_name,
                     fh.email,
                     fh.reporting_person_id,
                     fh.reporting_person_name,
@@ -138,7 +150,7 @@ export class UpdateGetUserTreeHierarchy1761648240780
                     )
                     AND (education_medium IS NULL OR fh.medium_of_education = ANY(education_medium))
                 GROUP BY
-                    fh.id, fh.full_name, fh.email, fh.reporting_person_id,
+                    fh.id, fh.full_name,fh.first_name,fh.middle_name,fh.last_name, fh.email, fh.reporting_person_id,
                     fh.reporting_person_name, fh.designation_id, fh.designation_name,
                     fh.is_active, fh.experience_years, fh.medium_of_education
                 HAVING
@@ -173,6 +185,9 @@ export class UpdateGetUserTreeHierarchy1761648240780
                 SELECT DISTINCT
                     u.id,
                     u.full_name::text,
+                    u.first_name::text,
+                    u.middle_name::text,
+                    u.last_name::text,
                     u.email::text,
                     u.reporting_person_id,
                     rp.full_name::text AS reporting_person_name,
@@ -198,6 +213,9 @@ export class UpdateGetUserTreeHierarchy1761648240780
                 SELECT
                     u.id,
                     u.full_name::text,
+                    u.first_name::text,
+                    u.middle_name::text,
+                    u.last_name::text,
                     u.email::text,
                     u.reporting_person_id,
                     rp.full_name::text AS reporting_person_name,
@@ -219,6 +237,9 @@ export class UpdateGetUserTreeHierarchy1761648240780
                 SELECT
                     rh.id,
                     rh.full_name,
+                    rh.first_name,
+                    rh.middle_name,
+                    rh.last_name,
                     rh.email,
                     rh.reporting_person_id,
                     rh.reporting_person_name,
@@ -250,7 +271,7 @@ export class UpdateGetUserTreeHierarchy1761648240780
                         _active_status  IS NULL OR rh.is_active = _active_status 
                     )
                 GROUP BY
-                    rh.id, rh.full_name, rh.email, rh.reporting_person_id,
+                    rh.id, rh.full_name,rh.first_name,rh.middle_name,rh.last_name, rh.email, rh.reporting_person_id,
                     rh.reporting_person_name, rh.designation_id, rh.designation_name,
                     rh.is_active, rh.experience_years, rh.medium_of_education
                 HAVING
@@ -279,6 +300,9 @@ export class UpdateGetUserTreeHierarchy1761648240780
                 t.cnt AS total_count,
                 ch.id AS user_id,
                 ch.full_name,
+                ch.first_name,
+                ch.middle_name,
+                ch.last_name,
                 ch.email,
                 json_build_object('id', ch.reporting_person_id, 'name', ch.reporting_person_name) AS reporting_person,
                 json_build_object('id', ch.designation_id, 'name', ch.designation_name) AS designation,

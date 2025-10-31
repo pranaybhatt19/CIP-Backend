@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class UpdateGetUserHierarchy1761648265450 implements MigrationInterface {
-  name = "UpdateGetUserHierarchy1761648265450";
+export class UpdateGetUserHierarchy1761648265453 implements MigrationInterface {
+  name = "UpdateGetUserHierarchy1761648265453";
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
@@ -10,7 +10,7 @@ export class UpdateGetUserHierarchy1761648265450 implements MigrationInterface {
             );
             
             CREATE OR REPLACE FUNCTION cip_schema.get_user_hierarchy(root_user_id integer, name_filter text, education_medium text[], designation_ids integer[], reporting_person_ids integer[], experience_type text, experience_value numeric, attempts_type text, attempts_value numeric, last_comm_exact timestamp without time zone, last_comm_from timestamp without time zone, last_comm_to timestamp without time zone, limit_val integer, offset_val integer, order_field text, order_direction text, tags_filter text[], _active_status boolean)
-            RETURNS TABLE(total_count bigint, user_id integer, full_name text, email text, reporting_person json, designation json, experience_years numeric, attempts_count bigint, medium_of_education text, last_communication_date timestamp without time zone, link text, tags text[],active_status boolean)
+            RETURNS TABLE(total_count bigint, user_id integer, full_name text,first_name text,middle_name text,last_name text, email text, reporting_person json, designation json, experience_years numeric, attempts_count bigint, medium_of_education text, last_communication_date timestamp without time zone, link text, tags text[],active_status boolean)
             LANGUAGE plpgsql
             AS $function$
             BEGIN
@@ -19,6 +19,9 @@ export class UpdateGetUserHierarchy1761648265450 implements MigrationInterface {
                     SELECT
                         u.id,
                         u.full_name::text,
+                        u.first_name::text,
+                        u.middle_name::text,
+                        u.last_name::text,
                         u.email::text,
                         u.reporting_person_id,
                         rp.full_name::text AS reporting_person_name,
@@ -38,6 +41,9 @@ export class UpdateGetUserHierarchy1761648265450 implements MigrationInterface {
                     SELECT
                         u.id,
                         u.full_name::text,
+                        u.first_name::text,
+                        u.middle_name::text,
+                        u.last_name::text,
                         u.email::text,
                         u.reporting_person_id,
                         rp.full_name::text AS reporting_person_name,
@@ -74,7 +80,7 @@ export class UpdateGetUserHierarchy1761648265450 implements MigrationInterface {
                         LEFT JOIN cip_schema.communications cm
                         ON cm.user_id = uh.id AND cm.is_deleted = false
                         GROUP BY
-                        uh.id, uh.full_name, uh.email, uh.reporting_person_id,
+                        uh.id, uh.full_name,uh.first_name,uh.middle_name,uh.last_name, uh.email, uh.reporting_person_id,
                         uh.reporting_person_name, uh.designation_id, uh.designation_name,
                         uh.is_active, uh.experience_years, uh.medium_of_education
                 ),
@@ -124,6 +130,9 @@ export class UpdateGetUserHierarchy1761648265450 implements MigrationInterface {
                     (SELECT COUNT(*) FROM filtered_hierarchy) AS total_count,
                     fh.id AS user_id,
                     fh.full_name,
+                    fh.first_name::text,
+                    fh.middle_name::text,
+                    fh.last_name::text,
                     fh.email,
                     json_build_object('id', fh.reporting_person_id, 'name', fh.reporting_person_name) AS reporting_person,
                     json_build_object('id', fh.designation_id, 'name', fh.designation_name) AS designation,
